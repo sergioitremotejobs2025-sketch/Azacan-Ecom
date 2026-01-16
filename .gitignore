@@ -1,0 +1,36 @@
+# Django
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+*.sqlite3
+*.db
+
+# Virtual Environment
+venv/
+.env/
+
+# IDE
+.DS_Store
+.idea/
+.vscode/
+
+# Logs
+*.log
+
+# Media and Static Files
+media/
+static/
+
+# Environment Variables
+.env
+.env.local
+
+# OS Specific
+*.swp
+*.swo
+
+# Testing
+test_api_endpoints.py
+test_azacan.py
+test_rag_query.py
