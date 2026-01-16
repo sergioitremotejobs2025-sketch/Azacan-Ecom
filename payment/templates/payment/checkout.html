@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<header class="bg-dark py-5">
+    <div class="container px-4 px-lg-5 my-5">
+        <div class="text-center text-white">
+            <h1 class="display-4 fw-bold">Checkout</h1>
+            <p class="lead fw-normal text-white-50 mb-0">Review your order and complete the payment</p>
+        </div>
+    </div>
+</header>
+<div class="container center align-items-center justify-content-center ">
+    <div class="row center align-items-center justify-content-center">
+        <div class="col-md-8 center align-items-center justify-content-center">
+            <div class="card center align-items-center justify-content-center">
+                <div class="card-body center align-items-center justify-content-center">
+                    <h1>Order Summary</h1>
+                    <table class="table center align-items-center justify-content-center">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Price</th>
+                                <th>Quantity</th>
+                                <th>Subtotal</th>
+                                <th>Remove</th>
+                                <th>Update</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if cart %}
+                            {% for item in cart %}
+                            <tr>
+                                <td> {{ item.product.name }}</td>
+                                <td>
+                                    {% if item.product.is_sale %}
+                                    <strike>${{ item.product.price }}</strike>
+                                    &nbsp; ${{ item.product.sale_price }}
+                                    {% else %}
+                                    ${{ item.product.price }}
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <select id="select{{ item.product.id }}" class="form-select">
+                                        <option value="{{ item.quantity }}" selected>{{ item.quantity }}</option>
+                                        <option value="1">1</option>
+                                        <option value="2">2</option>
+                                        <option value="3">3</option>
+                                        <option value="4">4</option>
+                                        <option value="5">5</option>
+                                    </select>
+                                </td>
+                                <td> ${{ item.total_price }} </td>
+                                <td>
+                                    <button type="button" data-index="{{ item.product.id }}"
+                                        class="btn btn-danger remove-cart">Remove</button>
+                                </td>
+                                <td>
+                                    <button type="button" data-index="{{ item.product.id }}"
+                                        class="btn btn-primary update-cart">Update</button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            <tr>
+                                <td colspan="3" class="text-end"><strong>Total:</strong></td>
+                                <td colspan="3"><strong>${{ totals }}</strong></td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="4">No products in cart</td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card  center align-items-center justify-content-center">
+        <div class="col-md-8 center align-items-center justify-content-center"></div>
+        <div class="card-header center align-items-center justify-content-center">
+            Shipping Information
+        </div>
+        <div class="card-body center align-items-center justify-content-center">
+            <form method="post">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <a href="" class="btn btn-primary">Continue To Billing</a>
+            </form>
+        </div>
+    </div>
+
+    {% if recommendations %}
+    <div class="card-body center align-items-center justify-content-center">
+        <h2>Recommendations</h2>
+
+        {{ recommendations|safe }}
+
+    </div>
+    {% endif %}
+</div>
+<a href="" class="btn btn-success center align-items-center justify-content-center">Continue To Billing</a>
+</div>
+
+<script>
+    // Update Cart
+    $(document).on('click', '.update-cart', function (e) {
+        e.preventDefault();
+        var productid = $(this).data('index');
+        $.ajax({
+            url: '{% url "cart_update" %}',
+            type: 'POST',
+            data: {
+                'product_id': $(this).data('index'),
+                'product_qty': $('#select' + $(this).data('index') + ' option:selected').text(),
+                'csrfmiddlewaretoken': '{{ csrf_token }}',
+                'action': 'post',
+            },
+            success: function (response) {
+                location.reload();
+            },
+            error: function (response) {
+                console.log(response);
+            }
+        });
+    });
+
+    // Remove from Cart
+    $(document).on('click', '.remove-cart', function (e) {
+        e.preventDefault();
+        var productId = $(this).data('index');
+        $.ajax({
+            url: '{% url "cart_delete" %}',
+            type: 'POST',
+            data: {
+                'product_id': productId,
+                'csrfmiddlewaretoken': '{{ csrf_token }}',
+                'action': 'post',
+            },
+            success: function (response) {
+                location.reload();
+            },
+            error: function (response) {
+                console.log(response);
+            }
+        });
+    });
+</script>
+{% endblock %}

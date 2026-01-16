@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<!-- Header-->
+<header class="bg-dark py-5">
+    <div class="container px-4 px-lg-5 my-5">
+        <div class="text-center text-white">
+            <h1 class="display-4 fw-bolder">Shop in style</h1>
+            <p class="lead fw-normal text-white-50 mb-0">With this shop hompeage template</p>
+        </div>
+    </div>
+</header>
+<!-- Section-->
+<section class="py-5">
+    <div class="container px-4 px-lg-5 mt-5">
+        <div class="row gx-4 gx-lg-5 row-cols-2 row-cols-md-3 row-cols-xl-4 justify-content-center">
+
+            {% for product in products %}
+            <div class="col mb-2">
+                <div class="card h-100">
+                    <!--Sale badge-->
+                    {% if product.is_sale %}
+                    <div class="badge bg-dark text-red position-absolute">Sale</div>
+                    {% endif %}
+                    <!-- Product image-->
+                    {% if product.image %}
+                    <img class="card-img-top" src="{{ product.image.url }}" alt="..." />
+                    {% else %}
+                    <img class="card-img-top" src="{% static 'assets/no_image.png' %}" alt="..." />
+                    {% endif %}
+                    <!-- Product details-->
+                    <div class="card-body p-4">
+                        <div class="text-center">
+                            <!-- Product name-->
+                            <h5 class="fw-bolder">{{ product.name }}</h5>
+                            <!-- Product dimensions -->
+                            {% if product.dimensions %}
+                            <p class="text-muted small mb-2">Dimensions: {{ product.dimensions.height }} x {{
+                                product.dimensions.width }} x {{ product.dimensions.thickness }}</p>
+                            {% endif %}
+                            <!-- Product price-->
+                            {{ product.price }}
+                        </div>
+                    </div>
+                    <div class="card-footer p-4 pt-0 border-top-0 bg-transparent">
+                        {% if product.is_sale %}
+                        <span class="text-muted text-decoration-line-through">{{ product.price }}</span>
+                        {% endif %}
+                        {{ product.sale_price }}
+
+                        <div class="text-center mb-3">
+                            <p class="text-muted small">{{ product.description }}</p>
+                        </div>
+                        <div class="text-center">
+                            <a class="btn btn-outline-dark mt-auto" href="{% url 'product' product.id %}">View
+                                Product</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    </div>
+</section>
+{% endblock %}

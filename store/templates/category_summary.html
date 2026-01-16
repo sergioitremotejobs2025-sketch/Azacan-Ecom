@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block content %}
+<header class="bg-dark py-5">
+    <div class="container px-4 px-lg-5 my-5">
+        <div class="text-center text-white">
+            <h1 class="display-4 fw-bolder">Categories</h1>
+            <p class="lead fw-normal text-white-50 mb-0">Welcome to Azacan</p>
+        </div>
+    </div>
+</header>
+
+{% for category in categories %}
+<div class="row">
+    <div class="col-md-12">
+        <h2><a href="{% url 'category' category.name %}">{{ category.name }}</a></h2>
+    </div>
+</div>
+{% endfor %}
+
+<br /><br /><br /><br /><br /><br /><br />
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<header class="bg-dark text-white py-5">
+    <h2>Update Profile Information</h2>
+</header>
+<div class="container mt-5 mb-5 py-5 card">
+    <br>
+    <strong>Billing Information</strong>
+    <br>
+    <form method="post" action="{% url 'update_info' %} ">
+        {% csrf_token %}
+        {{ form.as_p }}
+
+        <br>
+        <strong>Shipping Information</strong>
+        <br>
+
+        {{ shipping_form.as_p }}
+        <button type="submit">Update</button>
+    </form>
+</div>
+{% endblock %}

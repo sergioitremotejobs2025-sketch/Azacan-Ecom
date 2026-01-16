@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<header class="bg-dark py-5">
+    <div class="container px-4 px-lg-5 my-5">
+        <div class="text-center text-white">
+            <h1 class="display-4 fw-bolder">Search</h1>
+            <p class="lead fw-normal text-white-50 mb-0">Welcome to Azacan</p>
+        </div>
+    </div>
+</header>
+<div class="card">
+    <div class="card-header">
+        Search Products
+    </div>
+    <div class="card-body text-center container col-md-6">
+        <form method="post" action="{% url 'search' %}">
+            {% csrf_token %}
+            <input type="text" class="form-control" name="search" placeholder="Buscar...">
+            <button type="submit" class="btn btn-primary">Buscar Productos</button>
+        </form>
+    </div>
+</div>
+<br><br>
+{% if products %}
+<div class="row">
+    {% for product in products %}
+    <div class="col-md-4">
+        <div class="card mb-4">
+            {% if product.image %}
+            <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}">
+            {% else %}
+            <div class="card-img-top bg-light text-center py-5">No Image</div>
+            {% endif %}
+            <div class="card-body">
+                <h5 class="card-title">{{ product.name }}</h5>
+                <p class="card-text">{{ product.description }}</p>
+                <p class="card-text">Precio: {{ product.price }}</p>
+                <a href="{% url 'product' product.id %}" class="btn btn-primary">Ver Producto</a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% endblock %}
