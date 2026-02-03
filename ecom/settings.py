@@ -35,10 +35,25 @@ INSTALLED_APPS = [
     'corsheaders',
 ]
 
+# === STATIC FILES - MUST BE EXACTLY LIKE THIS ===
+STATIC_URL = '/static/'
+
+# Folder where collectstatic copies everything
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# Your own static folders (if you have /static/ in project root)
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',
+]
+
+# VERY IMPORTANT - WhiteNoise settings
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'corsheaders.middleware.CorsMiddleware', 
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -94,14 +109,24 @@ WSGI_APPLICATION = 'ecom.wsgi.application'
 #        'NAME': BASE_DIR / 'db.sqlite3',
 #    }
 #}
+#DATABASES = {
+#    'default': {
+#        'ENGINE': 'django.db.backends.postgresql',
+#        'NAME': 'book_store_db',
+#        'USER': 'sergioabad',
+#        'PASSWORD': '',
+#        'HOST': 'localhost',
+#        'PORT': '5432',
+#    }
+#}
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'book_store_db',
-        'USER': 'sergioabad',
-        'PASSWORD': '',
-        'HOST': 'localhost',
-        'PORT': '5432',
+        'NAME': os.getenv('POSTGRES_DB', 'postgres'),
+        'USER': os.getenv('POSTGRES_USER', 'postgres'),
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'postgres'),
+        'HOST': os.getenv('POSTGRES_HOST', 'db'),      # ← service name!
+        'PORT': os.getenv('POSTGRES_PORT', '5432'),
     }
 }
 
@@ -135,11 +160,3 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 
 USE_TZ = False
-
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/6.0/howto/static-files/
-
-STATIC_URL = 'static/'
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
