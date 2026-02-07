@@ -1,3 +1,4 @@
+import os
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_ollama import ChatOllama
 from langchain_core.output_parsers import StrOutputParser
@@ -89,7 +90,7 @@ def get_recommendations(user_id, top_k=3):
         #return context
         # LLM generation
         try:
-            llm = ChatOllama(model="llama3.1:8b")
+            llm = ChatOllama(model="llama3.1:8b", base_url=os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434'))
             prompt = ChatPromptTemplate.from_template(
             """You are an expert at formatting book recommendations in clean HTML.
 
@@ -183,7 +184,7 @@ def get_recommendations_by_book_title(book_title: str, top_k: int = 5) -> str:
 
         # Step 4: Generate recommendations using LLM
         try:
-            llm = ChatOllama(model="llama3.1:8b", temperature=0.7)
+            llm = ChatOllama(model="llama3.1:8b", temperature=0.7, base_url=os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434'))
             prompt = ChatPromptTemplate.from_template(
                 """You are a knowledgeable bookstore assistant. 
                     A customer enjoyed the book titled "{book_title}".
@@ -267,7 +268,7 @@ def get_recommendations_by_query(query: str, top_k: int = 5) -> str:
 
         # Step 4: Generate recommendations using LLM
         try:
-            llm = ChatOllama(model="llama3.1:8b", temperature=0.7)
+            llm = ChatOllama(model="llama3.1:8b", temperature=0.7, base_url=os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434'))
             prompt = ChatPromptTemplate.from_template(
                 """You are a helpful bookstore assistant. 
                     A customer is looking for books based on the following request: "{query}".

@@ -49,6 +49,10 @@ STATICFILES_DIRS = [
 # VERY IMPORTANT - WhiteNoise settings
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
+# Media files (uploads)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
@@ -109,16 +113,19 @@ WSGI_APPLICATION = 'ecom.wsgi.application'
 #        'NAME': BASE_DIR / 'db.sqlite3',
 #    }
 #}
-#DATABASES = {
-#    'default': {
-#        'ENGINE': 'django.db.backends.postgresql',
-#        'NAME': 'book_store_db',
-#        'USER': 'sergioabad',
-#        'PASSWORD': '',
-#        'HOST': 'localhost',
-#        'PORT': '5432',
-#    }
-#}
+# Local (commented out)
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'book_store_db',
+#         'USER': 'sergioabad',
+#         'PASSWORD': '',
+#         'HOST': 'localhost',
+#         'PORT': '5432',
+#     }
+# }
+
+# Docker / Environment variables
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',

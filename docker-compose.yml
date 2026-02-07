@@ -11,6 +11,7 @@ services:
       - "8000:8000"
     environment:
       - DEBUG=1
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
     depends_on:
       - db
 
@@ -19,6 +20,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./init-pgvector.sql:/docker-entrypoint-initdb.d/init-pgvector.sql
+      - ./book_store_db_backup.sql:/docker-entrypoint-initdb.d/z_book_store_db_backup.sql
     environment:
       - POSTGRES_DB=postgres
       - POSTGRES_USER=postgres
