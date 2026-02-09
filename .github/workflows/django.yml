@@ -49,3 +49,15 @@ jobs:
         POSTGRES_PORT: 5432
       run: |
         python manage.py test
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        push: true
+        tags: ghcr.io/${{ github.repository }}:latest
+
