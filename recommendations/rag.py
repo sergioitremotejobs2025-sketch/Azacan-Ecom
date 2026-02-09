@@ -308,3 +308,22 @@ def get_recommendations_by_query(query: str, top_k: int = 5) -> str:
     except Exception as e:
         logger.error(f"Unexpected error in query recommendations for '{query[:50]}...': {str(e)}")
         return "We're having trouble generating recommendations for your query right now. Please try again later."
+        
+def search_books(query: str, top_k: int = 5):
+    """
+    Search for books using vector similarity.
+    Returns: QuerySet of Book objects
+    """
+    try:
+        model = get_sentence_transformer_model()
+        query_embedding = model.encode(query).tolist()
+        
+        similar_books = (
+            Book.objects.annotate(distance=CosineDistance('embedding', query_embedding))
+            .filter(embedding__isnull=False)
+            .order_by('distance')[:top_k]
+        )
+        return similar_books
+    except Exception as e:
+        logger.error(f"Vector search failed: {e}")
+        return Book.objects.none()

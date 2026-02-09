@@ -16,9 +16,39 @@ import json
 
 def search(request):
     # Determine if they filled out the form
-    if request.method == 'POST':
-        query = request.POST.get('search')
+    query = request.POST.get('search') or request.GET.get('search')
+    if query:
+        
+        # 1. Standard Keyword Search
         products = Product.objects.filter(Q(name__icontains=query) | Q(description__icontains=query))
+
+        # 2. Semantic Vector Search
+        try:
+            from recommendations.rag import search_books
+            # Get semantically similar books
+            semantic_books = search_books(query, top_k=5)
+            
+            if semantic_books:
+                # Extract identifiers to map back to Products
+                book_titles = [b.title for b in semantic_books]
+                # Also try reference if available, assuming they might link
+                book_refs = [b.reference for b in semantic_books if b.reference]
+                
+                # Find matching Products
+                semantic_products = Product.objects.filter(
+                    Q(name__in=book_titles) | 
+                    Q(reference__in=book_refs)
+                )
+                
+                # Combine results (Union)
+                products = products | semantic_products
+                products = products.distinct()
+                
+        except Exception as e:
+            print(f"Semantic search error: {e}")
+            # Generate error log but do not crash the user experience
+            pass
+
         if not products:
             messages.error(request, 'No se encontraron productos con el nombre "{}"'.format(query)) 
             return redirect('search')
