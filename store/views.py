@@ -149,19 +149,16 @@ def product(request, pk):
 
 def home(request):
     # Obtener todos los productos (puedes filtrar, ordenar o paginar aquí)
-    products = Product.objects.all()
+    products_list = Product.objects.all().order_by('?') # Randomize for variety or '-created_at'
 
-    # Opcional: depuración en consola (útil mientras desarrollas)
-    for product in products:
-        dims = product.dimensions or {}  # Asegura que no sea None
-        height = dims.get('height', 'N/A')
-        width = dims.get('width', 'N/A')
-        thickness = dims.get('thickness', 'N/A')
-        #print(f"Producto: {product.title} | Dimensiones: {height} x {width} x {thickness}")
+    # Pagination: Show 8 products per page
+    paginator = Paginator(products_list, 8)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
 
     # ¡IMPORTANTE! Devolver la respuesta HTTP con el template
     context = {
-        'products': products,
+        'products': page_obj,
         'page_title': 'Inicio - Mi Tienda',  # Opcional, para usar en el template
     }
     return render(request, 'home.html', context)
