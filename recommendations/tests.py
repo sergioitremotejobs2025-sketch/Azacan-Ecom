@@ -4,6 +4,21 @@ from recommendations.models import Book, Purchase
 from recommendations.rag import get_recommendations, get_sentence_transformer_model
 from unittest.mock import patch, MagicMock
 import numpy as np
+import pydantic
+
+# Create a mock that passes Pydantic validation
+class MockableMagicMock(MagicMock):
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.validate
+
+    @classmethod
+    def validate(cls, v, info=None):
+        return v
+
+# Patch MagicMock to include Pydantic validation if needed, or just use our subclass
+# For simplicity in this test file, we'll use our subclass or just patch the validation 
+# behavior if we can, but modifying the test setup is safer.
 
 
 class BookModelTestCase(TestCase):
@@ -139,29 +154,94 @@ class RAGRecommendationTestCase(TestCase):
         # Create purchase
         Purchase.objects.create(user=self.user, book=self.book1)
         
-        # Mock the LLM to avoid actual API calls
-        with patch('recommendations.rag.ChatOllama') as mock_llm:
+        # Mock both ChatOllama and the chain construction
+        with patch('recommendations.rag.ChatOllama') as mock_llm_cls:
+            # Create a mock chain
             mock_chain = MagicMock()
             mock_chain.invoke.return_value = "Recommended books: Fantasy Book, Mystery Book"
-            mock_llm.return_value = mock_chain
             
-            result = get_recommendations(self.user.id, top_k=2)
+            # Configure the mock LLM to be usable in the pipe | operator
+            mock_llm_instance = MagicMock()
+            mock_llm_cls.return_value = mock_llm_instance
             
-            self.assertIsInstance(result, str)
-            # Should not be an error message
-            self.assertNotIn('No purchases', result)
-            self.assertNotIn('Invalid user', result)
+            # When (prompt | llm | parser) happens, we want to control the result
+            # The chain is constructed as: prompt | llm | StrOutputParser()
+            # We can mock the result of the composition
+            
+            # Easier approach: Mock the entire chain pipeline in the function
+            # But since we can't easily do that without refactoring the function, 
+            # let's try to verify if we can just mock invoke on what's returned.
+            
+            # Actually, the error "Input should be a valid string" comes from ChatOllama pydantic validation.
+            # We need to make sure ChatOllama(...) returns something that passes validation 
+            # OR we mock the class in a way that it doesn't trigger validation?
+            # No, ChatOllama is instantiated in the function.
+            
+            # The fix is to ensure the mock object bypasses Pydantic validation or we mock where it's used.
+            # Since we can't easily change the production code to accept mocks, 
+            # we should mock the behavior of current 'chain' variable construction.
+            pass
+
+        # Better approach: Mock the invoke method of the chain. 
+        # Since chain = prompt | llm | StrOutputParser(), 'chain' is a RunnableSequence.
+        # We can patch 'recommendations.rag.ChatPromptTemplate' and others, 
+        # or we can patch the `invoke` method if we can access the chain.
+         
+        # Let's try patching ChatOllama to return a mock that is compliant or matches expectations.
+        # The issue is likely that ChatPromptTemplate.from_template(...) | mock_llm 
+        # tries to validate mock_llm.
+        
+        # Let's use the `MockableMagicMock` we defined above for the return value of ChatOllama()
+        with patch('recommendations.rag.ChatOllama') as mock_llm_cls:
+            mock_llm_instance = MockableMagicMock()
+            mock_llm_cls.return_value = mock_llm_instance
+            
+            # Use side_effect to return our mock chain result when the chain is invoked
+            # The chain is formed by pipes. The result of the pipe is what .invoke() is called on.
+            # mocking the pipe operator is hard.
+            
+            # Alternative: Mock `recommendations.rag.ChatPromptTemplate` so that `prompt | ...` returns a mock
+            with patch('recommendations.rag.ChatPromptTemplate') as mock_prompt_cls:
+                mock_prompt = MagicMock()
+                mock_prompt_cls.from_template.return_value = mock_prompt
+                
+                # Setup the chain of calls: prompt | llm | parser
+                # prompt | llm -> intermediate
+                # intermediate | parser -> chain
+                mock_intermediate = MagicMock()
+                mock_prompt.__or__.return_value = mock_intermediate
+                
+                mock_chain = MagicMock()
+                mock_intermediate.__or__.return_value = mock_chain
+                
+                mock_chain.invoke.return_value = "Recommended books: Fantasy Book, Mystery Book"
+                
+                result = get_recommendations(self.user.id, top_k=2)
+                
+                self.assertIsInstance(result, str)
+                self.assertNotIn('No purchases', result)
+                self.assertNotIn('Invalid user', result)
     
     def test_recommendations_caching(self):
         """Test that recommendations are cached"""
         Purchase.objects.create(user=self.user, book=self.book1)
         
-        with patch('recommendations.rag.ChatOllama') as mock_llm:
-            mock_chain = MagicMock()
-            mock_chain.invoke.return_value = "Cached recommendations"
-            mock_llm.return_value = mock_chain
+        with patch('recommendations.rag.ChatOllama') as mock_llm_cls, \
+             patch('recommendations.rag.ChatPromptTemplate') as mock_prompt_cls:
             
-            # First call - should hit LLM
+            # Setup mock chain
+            mock_prompt = MagicMock()
+            mock_prompt_cls.from_template.return_value = mock_prompt
+            
+            mock_intermediate = MagicMock()
+            mock_prompt.__or__.return_value = mock_intermediate
+            
+            mock_chain = MagicMock()
+            mock_intermediate.__or__.return_value = mock_chain
+            
+            mock_chain.invoke.return_value = "Cached recommendations"
+            
+            # First call - should hit LLM (which is our mock chain)
             result1 = get_recommendations(self.user.id, top_k=2)
             call_count_1 = mock_chain.invoke.call_count
             
@@ -266,10 +346,20 @@ class RAGEdgeCasesTestCase(TestCase):
         Purchase.objects.create(user=self.user, book=book)
         Purchase.objects.create(user=self.user, book=book)
         
-        with patch('recommendations.rag.ChatOllama') as mock_llm:
+        with patch('recommendations.rag.ChatOllama') as mock_llm_cls, \
+             patch('recommendations.rag.ChatPromptTemplate') as mock_prompt_cls:
+            
+            # Setup mock chain
+            mock_prompt = MagicMock()
+            mock_prompt_cls.from_template.return_value = mock_prompt
+            
+            mock_intermediate = MagicMock()
+            mock_prompt.__or__.return_value = mock_intermediate
+            
             mock_chain = MagicMock()
+            mock_intermediate.__or__.return_value = mock_chain
+            
             mock_chain.invoke.return_value = "Recommendations"
-            mock_llm.return_value = mock_chain
             
             result = get_recommendations(self.user.id, top_k=3)
             
