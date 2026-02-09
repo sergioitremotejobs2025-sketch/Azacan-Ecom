@@ -135,14 +135,26 @@ def category_summary(request):
     return render(request, 'category_summary.html', {'categories': categories})
 
 def category(request, name):
-    name = name.replace("-", " ")
+    # Try exact match first (e.g. "Science Fiction")
     try:
         category = Category.objects.get(name=name)
-        products = Product.objects.filter(category=category)
-        return render(request, 'category.html', {'category': category, 'products': products})
     except Category.DoesNotExist:
-        messages.error(request, 'Categoría no encontrada.')
-        return redirect('home')
+        # Try replacing hyphens with spaces (e.g. "science-fiction" -> "science fiction")
+        name_clean = name.replace("-", " ")
+        try:
+            category = Category.objects.get(name__iexact=name_clean)
+        except Category.DoesNotExist:
+             messages.error(request, 'Categoría no encontrada.')
+             return redirect('home')
+             
+    products = Product.objects.filter(category=category)
+    
+    # Pagination for category page
+    paginator = Paginator(products, 8)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    return render(request, 'category.html', {'category': category, 'products': page_obj})
 def product(request, pk):
     product = Product.objects.get(pk=pk)
     return render(request, 'product.html', {'product': product})
