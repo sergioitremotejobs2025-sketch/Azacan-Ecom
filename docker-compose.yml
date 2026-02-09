@@ -3,9 +3,9 @@ version: '3.9'
 services:
   web:
     build: .
-
+    # Volume mount removed to avoid 'Resource deadlock avoided' (Errno 35) on macOS
+    # This means live code reloading will not work; you must rebuild the image to see changes.
     volumes:
-      - .:/app
       - static_volume:/app/staticfiles
     ports:
       - "8000:8000"
