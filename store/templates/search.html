@@ -1,47 +1,170 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block content %}
+<!-- Header-->
 <header class="bg-dark py-5">
     <div class="container px-4 px-lg-5 my-5">
         <div class="text-center text-white">
             <h1 class="display-4 fw-bolder">Search</h1>
-            <p class="lead fw-normal text-white-50 mb-0">Welcome to Azacan</p>
+            <p class="lead fw-normal text-white-50 mb-0">Find your next favorite book</p>
         </div>
     </div>
 </header>
-<div class="card">
-    <div class="card-header">
-        Search Products
-    </div>
-    <div class="card-body text-center container col-md-6">
-        <form method="post" action="{% url 'search' %}">
-            {% csrf_token %}
-            <input type="text" class="form-control" name="search" placeholder="Buscar...">
-            <button type="submit" class="btn btn-primary">Buscar Productos</button>
-        </form>
-    </div>
-</div>
-<br><br>
-{% if products %}
-<div class="row">
-    {% for product in products %}
-    <div class="col-md-4">
-        <div class="card mb-4">
-            {% if product.image %}
-            <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}">
-            {% else %}
-            <div class="card-img-top bg-light text-center py-5">No Image</div>
-            {% endif %}
-            <div class="card-body">
-                <h5 class="card-title">{{ product.name }}</h5>
-                <p class="card-text">{{ product.description }}</p>
-                <p class="card-text">Precio: {{ product.price }}</p>
-                <a href="{% url 'product' product.id %}" class="btn btn-primary">Ver Producto</a>
+
+<!-- Search Section -->
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4">
+                    <form method="post" action="{% url 'search' %}" class="d-flex gap-2">
+                        {% csrf_token %}
+                        <input type="text" class="form-control form-control-lg" name="search"
+                            placeholder="Search for books, authors, or topics..." value="{{ query|default:'' }}"
+                            aria-label="Search">
+                        <button type="submit" class="btn btn-primary btn-lg px-4">
+                            <i class="bi bi-search"></i> Search
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
-    {% endfor %}
 </div>
-{% endif %}
+
+<!-- Results Section -->
+<section class="py-5">
+    <div class="container px-4 px-lg-5 mt-5">
+        {% if query %}
+        <h3 class="mb-4 text-center">Search Results for "{{ query }}"</h3>
+        {% endif %}
+
+        {% if products %}
+        <div class="row gx-4 gx-lg-5 row-cols-2 row-cols-md-3 row-cols-xl-4 justify-content-center">
+            {% for product in products %}
+            <div class="col mb-5">
+                <div class="card h-100 shadow-sm border-0 transition-hover">
+                    <!-- Sale badge-->
+                    {% if product.is_sale %}
+                    <div class="badge bg-danger text-white position-absolute" style="top: 0.5rem; right: 0.5rem">Sale
+                    </div>
+                    {% endif %}
+
+                    <!-- Product image-->
+                    <div class="ratio ratio-4x3 overflow-hidden bg-light rounded-top">
+                        {% if product.image %}
+                        <img class="card-img-top object-fit-cover" src="{{ product.image.url }}"
+                            alt="{{ product.name }}" />
+                        {% else %}
+                        <img class="card-img-top object-fit-cover opacity-50" src="{% static 'assets/no_image.png' %}"
+                            alt="No Image Available" />
+                        {% endif %}
+                    </div>
+
+                    <!-- Product details-->
+                    <div class="card-body p-4">
+                        <div class="text-center">
+                            <!-- Product name-->
+                            <h5 class="fw-bolder text-truncate" title="{{ product.name }}">{{ product.name }}</h5>
+
+                            <!-- Product reviews (optional placeholder) -->
+                            <!--
+                            <div class="d-flex justify-content-center small text-warning mb-2">
+                                <div class="bi-star-fill"></div>
+                                <div class="bi-star-fill"></div>
+                                <div class="bi-star-fill"></div>
+                                <div class="bi-star-fill"></div>
+                                <div class="bi-star-fill"></div>
+                            </div>
+                            -->
+
+                            <!-- Product price-->
+                            <div class="fs-5">
+                                {% if product.is_sale %}
+                                <span class="text-muted text-decoration-line-through me-1">{{ product.price }}€</span>
+                                <span class="text-danger fw-bold">{{ product.sale_price }}€</span>
+                                {% else %}
+                                <span class="fw-bold">{{ product.price }}€</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Description snippet -->
+                        {% if product.description %}
+                        <p class="card-text text-muted small mt-3 text-truncate-3"
+                            style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                            {{ product.description }}
+                        </p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Product actions-->
+                    <div class="card-footer p-4 pt-0 border-top-0 bg-transparent">
+                        <div class="text-center">
+                            <a class="btn btn-outline-dark mt-auto w-100" href="{% url 'product' product.id %}">View
+                                Details</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if products.has_other_pages %}
+        <nav aria-label="Page navigation" class="mt-5">
+            <ul class="pagination justify-content-center pagination-lg">
+                {% if products.has_previous %}
+                <li class="page-item">
+                    <a class="page-link shadow-none" href="?page={{ products.previous_page_number }}&search={{ query }}"
+                        aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">&laquo;</span>
+                </li>
+                {% endif %}
+
+                {% for num in products.paginator.page_range %}
+                {% if products.number == num %}
+                <li class="page-item active" aria-current="page">
+                    <span class="page-link shadow-none">{{ num }}</span>
+                </li>
+                {% elif num > products.number|add:'-3' and num < products.number|add:'3' %} <li class="page-item">
+                    <a class="page-link shadow-none" href="?page={{ num }}&search={{ query }}">{{ num }}</a>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+
+                    {% if products.has_next %}
+                    <li class="page-item">
+                        <a class="page-link shadow-none" href="?page={{ products.next_page_number }}&search={{ query }}"
+                            aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">&raquo;</span>
+                    </li>
+                    {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+
+        {% elif query %}
+        <!-- No results state -->
+        <div class="text-center py-5">
+            <i class="bi bi-search display-1 text-muted mb-3 d-block"></i>
+            <h3 class="text-muted">No products found matching "{{ query }}"</h3>
+            <p class="text-muted">Try checking your spelling or use different keywords.</p>
+            <a href="{% url 'home' %}" class="btn btn-outline-primary mt-3">Browse All Products</a>
+        </div>
+        {% endif %}
+    </div>
+</section>
 
 {% endblock %}

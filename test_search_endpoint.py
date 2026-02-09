@@ -8,18 +8,23 @@ def test_search(query):
         if response.status_code == 200:
             print(f"Search for '{query}' returned status 200 OK.")
             if "No se encontraron productos" in response.text:
-                print("No products found (as expected maybe?) or maybe search failed to find matches.")
+                print("No products found.")
             else:
-                print("Products found! Check the output HTML for results.")
-                # print snippet to confirm
-                print(response.text[:500])
+                print("Products found!")
+                if 'aria-label="Page navigation"' in response.text:
+                    print("Pagination controls FOUND in response.")
+                else:
+                    print("Pagination controls NOT found (maybe less than 6 results?).")
+                
+                # print snippet
+                # print(response.text[:500])
         else:
             print(f"Search failed with status: {response.status_code}")
     except Exception as e:
         print(f"Request failed: {e}")
 
 if __name__ == "__main__":
-    print("Testing semantic search (GET query)...")
+    print("Testing search pagination...")
     time.sleep(2)
     test_search("history")
     test_search("novel")

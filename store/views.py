@@ -1,5 +1,6 @@
 from django.shortcuts import render,redirect
 from .models import Product, Category, Profile
+from django.core.paginator import Paginator
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.contrib.auth.models import User
@@ -49,13 +50,21 @@ def search(request):
             # Generate error log but do not crash the user experience
             pass
 
-        if not products:
-            messages.error(request, 'No se encontraron productos con el nombre "{}"'.format(query)) 
-            return redirect('search')
-        else:
-            return render(request, 'search.html', {'products': products})
     else:
-        return render(request, 'search.html')
+        # If no query, maybe show nothing or all? 
+        # For now, let's just make products empty or handle it.
+        # Original code returned empty render.
+        products = []
+
+    if products:
+        paginator = Paginator(products, 6) # Show 6 products per page
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+        return render(request, 'search.html', {'products': page_obj, 'query': query})
+    else:
+        # If query was present but no results found (handled above with messages)
+        # OR if no query at all.
+        return render(request, 'search.html', {'query': query})
 
 def update_info(request):
     if not request.user.is_authenticated:
