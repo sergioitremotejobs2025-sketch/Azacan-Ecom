@@ -1,21 +1,50 @@
 {% extends 'base.html' %}
+
 {% block content %}
+<!-- Header -->
 <header class="bg-dark py-5">
     <div class="container px-4 px-lg-5 my-5">
         <div class="text-center text-white">
-            <h1 class="display-4 fw-bolder">Categories</h1>
-            <p class="lead fw-normal text-white-50 mb-0">Welcome to Azacan</p>
+            <h1 class="display-4 fw-bolder">Browse by Category</h1>
+            <p class="lead fw-normal text-white-50 mb-0">Explore our diverse collection of books</p>
         </div>
     </div>
 </header>
 
-{% for category in categories %}
-<div class="row">
-    <div class="col-md-12">
-        <h2><a href="{% url 'category' category.name %}">{{ category.name }}</a></h2>
+<!-- Categories Grid -->
+<div class="container py-5">
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% forcategory in categories %}
+        <div class="col">
+            <div class="card h-100 shadow-sm hover-shadow transition-all border-0">
+                <div class="card-body text-center d-flex flex-column justify-content-center py-5">
+                    <div class="mb-3">
+                        <i class="bi bi-book display-4 text-primary opacity-75"></i>
+                    </div>
+                    <h3 class="card-title h4 fw-bold">
+                        <a href="{% url 'category' category.name|slugify %}"
+                            class="text-decoration-none text-dark stretched-link">
+                            {{ category.name }}
+                        </a>
+                    </h3>
+                    {% if category.description %}
+                    <p class="card-text text-muted small px-3">
+                        {{ category.description|truncatewords:15 }}
+                    </p>
+                    {% endif %}
+                </div>
+                <div class="card-footer bg-transparent border-top-0 pb-4 text-center">
+                    <span class="btn btn-outline-primary btn-sm rounded-pill">View Books</span>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
     </div>
-</div>
-{% endfor %}
 
-<br /><br /><br /><br /><br /><br /><br />
+    {% if not categories %}
+    <div class="text-center py-5">
+        <p class="lead text-muted">No categories found.</p>
+    </div>
+    {% endif %}
+</div>
 {% endblock %}
