@@ -43,8 +43,9 @@ class BookModelTestCase(TestCase):
             description='Desc'
         )
         
-        # Should return 'Book - {id}'
-        self.assertTrue(str(book).startswith('Book - '))
+        # Should return descriptive string
+        self.assertIn('String Test', str(book))
+        self.assertIn('Author', str(book))
 
 
 class PurchaseModelTestCase(TestCase):

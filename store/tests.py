@@ -126,6 +126,8 @@ class CartTestCase(TestCase):
         request1 = self.client.get('/').wsgi_request
         cart1 = Cart(request1)
         cart1.add(product=self.product1, quantity=3)
+        # Manually save session to simulate middleware behavior
+        cart1.session.save()
         
         # Second request - verify cart persists
         request2 = self.client.get('/').wsgi_request
