@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<!-- Header -->
+<header class="bg-dark py-5 mb-5">
+    <div class="container px-4 px-lg-5 my-5">
+        <div class="text-center text-white">
+            <h1 class="display-4 fw-bolder">Billing Information</h1>
+            <p class="lead fw-normal text-white-50 mb-0">Enter your payment details</p>
+        </div>
+    </div>
+</header>
+
+<div class="container text-center">
+    <h2>Enter Payment Details</h2>
+    <p class="text-muted">This is a placeholder for the billing integration.</p>
+
+    <div class="card p-4 mx-auto" style="max-width: 600px;">
+        <h5>Review Shipping Info</h5>
+        <ul class="list-unstyled text-start">
+            <li><strong>Name:</strong> {{ shipping_info.shipping_full_name }}</li>
+            <li><strong>Email:</strong> {{ shipping_info.shipping_email }}</li>
+            <li><strong>Address:</strong> {{ shipping_info.shipping_address1 }}, {{ shipping_info.shipping_city }}</li>
+        </ul>
+
+        <div class="alert alert-warning">
+            Payment processing not yet implemented.
+        </div>
+
+        <a href="{% url 'payment_success' %}" class="btn btn-success btn-lg">Complete Order (Simulate)</a>
+    </div>
+</div>
+{% endblock %}
