@@ -1,26 +1,129 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block content %}
-<header class="bg-primary text-white p-3 text-center">
-    <div class="container">
-        <div class="row">
-            <div class="col-md-12">
-                <h1>Update User</h1>
-            </div>
+<!-- Header -->
+<header class="bg-dark py-5 mb-5">
+    <div class="container px-4 px-lg-5 my-5">
+        <div class="text-center text-white">
+            <h1 class="display-4 fw-bolder">User Profile</h1>
+            <p class="lead fw-normal text-white-50 mb-0">Manage your account details</p>
         </div>
     </div>
 </header>
 
-<div class="container">
-    <div class="row">
-        <div class="col-md-12">
-            <form method="post" action="{% url 'update_user' %}" class="p-3 m-3 border rounded shadow center">
-                {{ form.errors }}
-                {% csrf_token %}
-                {{ user_form.as_p }}
-                <button type="submit">Update Profile</button>
-            </form>
-            <a href="{% url 'update_password' %}" class="btn btn-danger">Update Password</a>
+<div class="container pb-5">
+    <div class="row justify-content-center">
+        <!-- Main Form Column -->
+        <div class="col-lg-8">
+            <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
+                <div class="card-header bg-primary bg-gradient p-4 border-0">
+                    <h4 class="mb-0 text-white"><i class="bi bi-person-bounding-box me-2"></i>Edit Profile Information
+                    </h4>
+                </div>
+                <div class="card-body p-5 bg-light">
+
+                    <form method="POST" action="{% url 'update_user' %}" class="needs-validation" novalidate>
+                        {% csrf_token %}
+
+                        {% if user_form.errors %}
+                        <div class="alert alert-danger alert-dismissible fade show shadow-sm rounded-3" role="alert">
+                            <h5 class="alert-heading"><i class="bi bi-exclamation-triangle-fill me-2"></i>There were
+                                errors submitting the form:</h5>
+                            <hr>
+                            <ul class="mb-0">
+                                {% for field in user_form %}
+                                {% for error in field.errors %}
+                                <li><strong>{{ field.field.widget.attrs.placeholder|default:field.name|title
+                                        }}</strong>: {{ error }}</li>
+                                {% endfor %}
+                                {% endfor %}
+                                {% for error in user_form.non_field_errors %}
+                                <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                        {% endif %}
+
+                        <!-- Username -->
+                        <div class="form-floating mb-4">
+                            {{ user_form.username }}
+                            <label for="{{ user_form.username.id_for_label }}">User Name</label>
+                            {% if user_form.username.help_text %}
+                            <div class="form-text mt-2"><small>{{ user_form.username.help_text|safe }}</small></div>
+                            {% endif %}
+                        </div>
+
+                        <div class="row g-3">
+                            <!-- First Name -->
+                            <div class="col-md-6">
+                                <div class="form-floating mb-4">
+                                    {{ user_form.first_name }}
+                                    <label for="{{ user_form.first_name.id_for_label }}">First Name</label>
+                                </div>
+                            </div>
+
+                            <!-- Last Name -->
+                            <div class="col-md-6">
+                                <div class="form-floating mb-4">
+                                    {{ user_form.last_name }}
+                                    <label for="{{ user_form.last_name.id_for_label }}">Last Name</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Email -->
+                        <div class="form-floating mb-4">
+                            {{ user_form.email }}
+                            <label for="{{ user_form.email.id_for_label }}">Email Address</label>
+                        </div>
+
+                        <div class="d-grid mt-5">
+                            <button type="submit" class="btn btn-primary btn-lg rounded-pill shadow-sm hover-effect">
+                                <i class="bi bi-save2 me-2"></i>Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar Actions -->
+        <div class="col-lg-4 mt-4 mt-lg-0">
+            <div class="card shadow border-0 rounded-4 mb-4">
+                <div class="card-body p-4">
+                    <h5 class="card-title fw-bold text-secondary mb-4 text-uppercase small ls-1">Account Actions</h5>
+                    <div class="d-grid gap-3">
+                        <a href="{% url 'update_password' %}"
+                            class="btn btn-outline-danger btn-lg text-start rounded-3 d-flex align-items-center justify-content-between p-3">
+                            <span><i class="bi bi-shield-lock me-2"></i>Change Password</span>
+                            <i class="bi bi-chevron-right small"></i>
+                        </a>
+                        <a href="{% url 'update_info' %}"
+                            class="btn btn-outline-dark btn-lg text-start rounded-3 d-flex align-items-center justify-content-between p-3">
+                            <span><i class="bi bi-truck me-2"></i>Shipping Details</span>
+                            <i class="bi bi-chevron-right small"></i>
+                        </a>
+                        <a href="{% url 'home' %}"
+                            class="btn btn-light btn-lg text-start rounded-3 d-flex align-items-center justify-content-between p-3 text-muted">
+                            <span><i class="bi bi-arrow-left me-2"></i>Back to Home</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Info Card -->
+            <div class="card bg-info bg-opacity-10 border-0 rounded-4 p-3">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="bi bi-info-circle-fill text-info h4 mb-0 me-3"></i>
+                        <h6 class="fw-bold text-dark mb-0">Did you know?</h6>
+                    </div>
+                    <p class="small text-muted mb-0">Keeping your profile updated helps us recommend better books and
+                        speeds up your checkout process!</p>
+                </div>
+            </div>
         </div>
     </div>
 </div>

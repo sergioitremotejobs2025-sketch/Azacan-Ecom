@@ -118,17 +118,19 @@ def update_user(request):
     if not request.user.is_authenticated:
         messages.error(request, 'You must be logged in to update your profile.')
         return redirect('login')
-    else:
-        current_user = User.objects.get(id=request.user.id)
-        user_form = UpdateUserForm(instance=current_user)
-        if request.method == 'POST':
-            user_form = UpdateUserForm(request.POST, instance=current_user)
-            if user_form.is_valid():
-                user_form.save()
-                messages.success(request, 'Profile updated successfully.')
+    
+    current_user = User.objects.get(id=request.user.id)
+    if request.method == 'POST':
+        user_form = UpdateUserForm(request.POST, instance=current_user)
+        if user_form.is_valid():
+            user_form.save()
+            messages.success(request, 'Profile updated successfully.')
             return redirect('update_user')
         else:
-            messages.error(request, 'Error updating profile.')
+             messages.error(request, 'Error updating profile. Please check the form.')
+    else:
+        user_form = UpdateUserForm(instance=current_user)
+        
     return render(request, 'update_user.html', {'user_form': user_form})  
 def category_summary(request):
     categories = Category.objects.all()
