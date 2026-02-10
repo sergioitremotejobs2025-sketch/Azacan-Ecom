@@ -1,6 +1,7 @@
 import os
 import django
 import sys
+import time
 
 # Setup Django environment
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ecom.settings')
@@ -11,7 +12,6 @@ from langchain_ollama import ChatOllama
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
-# Configuration
 # Configuration
 DEFAULT_CATEGORY_NAME = "Books" # The catch-all category we want to move items FROM
 
@@ -60,20 +60,27 @@ def auto_categorize():
         # Fallback: Get all products or category 1
         default_cat = Category.objects.first()
         if not default_cat:
-            print("No categories found at all. Converting generic setup...")
+            print("No categories found at all. Creating default 'Books'...")
             default_cat = Category.objects.create(name="Books", description="All books")
+            # If we just created it, likely all products need to be assigned to it first? 
+            # Assuming sync script ran previously.
     
-    print(f"Looking for products in category: '{default_cat.name}'")
+    # Statistics
+    total_products = Product.objects.count()
+    # Filter only products that are still in the default category
+    products_to_process_qs = Product.objects.filter(category=default_cat)
+    uncategorized_count = products_to_process_qs.count()
+    categorized_count = total_products - uncategorized_count
     
-    # Filter products that need categorization
-    # We take a slice to avoid processing 9000 items in one go during testing
-    products_to_process = Product.objects.filter(category=default_cat)
+    print("-" * 50)
+    print(f"Total Products: {total_products}")
+    print(f"Already Categorized: {categorized_count} (Skipping)")
+    print(f"Remaining to Process: {uncategorized_count} (In '{default_cat.name}')")
+    print("-" * 50)
     
-    if not products_to_process:
-        print("No products found to categorize (or all are already categorized).")
+    if uncategorized_count == 0:
+        print("All products have been categorized! Exiting.")
         return
-
-    print(f"Processing batch of {len(products_to_process)} products...")
 
     prompt = ChatPromptTemplate.from_template(
         """You are a helpful librarian.
@@ -88,31 +95,37 @@ def auto_categorize():
     
     chain = prompt | llm | StrOutputParser()
     
+    cat_list_str = ", ".join(CATEGORIES)
+    
+    # Using iterator to handle large queryset memory efficiently
+    # and to ensure we process the current state
+    count = 0
     success_count = 0
     
-    for product in products_to_process:
+    start_time = time.time()
+    
+    for product in products_to_process_qs.iterator():
+        count += 1
         try:
-            print(f"Categorizing: {product.name[:50]}...")
+            print(f"[{count}/{uncategorized_count}] Categorizing: {product.name[:40]}...", end=" ", flush=True)
             
-            # Prepare context
-            cat_list_str = ", ".join(CATEGORIES)
+            # Double check inside loop in case of race conditions or restarts (redundant but safe)
+            if product.category.name != DEFAULT_CATEGORY_NAME:
+                print("Skipped (Already done)")
+                continue
+
             description = product.description or "No description available"
             
-            # Update output directly in loop
+            # Invoke LLM
             response = chain.invoke({
                 "category_list": cat_list_str,
                 "title": product.name,
-                "description": description[:500] # Truncate long descriptions
+                "description": description[:500] 
             })
             
             category_name = response.strip()
             
-            # Simple validation: Check if response vaguely matches a known category
-            # If the LLM returns "Science Fiction", it matches exactly.
-            # If it returns "It is Fiction", we might have issues. 
-            # With temperature 0 and strict prompt, it usually behaves.
-            
-            # Handle potential hallucinations or slightly off text
+            # Validate
             matched_category = None
             for cat in CATEGORIES:
                 if cat.lower() in category_name.lower():
@@ -120,27 +133,30 @@ def auto_categorize():
                     break
             
             if not matched_category:
-                # Fallback if LLM invented a category or failed strict match
-                print(f"  -> LLM suggested '{category_name}', defaulting to 'Non-Fiction' (Unsure)")
-                matched_category = "Non-Fiction" # Safe fallback
+                matched_category = "Non-Fiction" # Fallback
+                print(f"[Fallback: {category_name} -> {matched_category}]", end=" ")
             
-            # Get or Create the Category in DB
-            category_obj, created = Category.objects.get_or_create(
+            # Get or Create Category
+            category_obj, _ = Category.objects.get_or_create(
                 name=matched_category,
                 defaults={'description': f'Books in the {matched_category} genre'}
             )
             
-            # Assign to product
+            # Update Product
             product.category = category_obj
             product.save()
             
-            print(f"  -> Assigned to: {matched_category}")
             success_count += 1
+            print(f"-> {matched_category}")
             
         except Exception as e:
-            print(f"  -> Failed to categorize {product.id}: {e}")
+            print(f"\nError processing {product.id}: {e}")
 
-    print(f"\nBatch complete! Successfully categorized {success_count}/{len(products_to_process)} products.")
+    elapsed = time.time() - start_time
+    print("-" * 50)
+    print(f"Job Complete!")
+    print(f"Processed: {success_count}/{uncategorized_count}")
+    print(f"Time Taken: {elapsed:.2f} seconds")
 
 if __name__ == "__main__":
     auto_categorize()
