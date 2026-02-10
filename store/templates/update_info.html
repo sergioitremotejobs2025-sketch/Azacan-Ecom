@@ -1,23 +1,188 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block content %}
-<header class="bg-dark text-white py-5">
-    <h2>Update Profile Information</h2>
+<!-- Header -->
+<header class="bg-dark py-5 mb-5">
+    <div class="container px-4 px-lg-5 my-5">
+        <div class="text-center text-white">
+            <h1 class="display-4 fw-bolder">Profile &amp; Shipping</h1>
+            <p class="lead fw-normal text-white-50 mb-0">Manage your billing and shipping details</p>
+        </div>
+    </div>
 </header>
-<div class="container mt-5 mb-5 py-5 card">
-    <br>
-    <strong>Billing Information</strong>
-    <br>
-    <form method="post" action="{% url 'update_info' %} ">
+
+<div class="container pb-5">
+    <form method="POST" action="{% url 'update_info' %}" class="needs-validation" novalidate>
         {% csrf_token %}
-        {{ form.as_p }}
 
-        <br>
-        <strong>Shipping Information</strong>
-        <br>
+        <div class="row g-5 justify-content-center">
 
-        {{ shipping_form.as_p }}
-        <button type="submit">Update</button>
+            <!-- Billing / Personal Info -->
+            <div class="col-lg-6">
+                <div class="card shadow-lg border-0 rounded-4 overflow-hidden h-100">
+                    <div class="card-header bg-primary bg-gradient p-4 border-0">
+                        <h4 class="mb-0 text-white"><i class="bi bi-person-vcard me-2"></i>Billing Information</h4>
+                    </div>
+                    <div class="card-body p-4 bg-light">
+
+                        <!-- Phone -->
+                        <div class="form-floating mb-3">
+                            {{ form.phone }}
+                            <label for="{{ form.phone.id_for_label }}">Phone Number</label>
+                        </div>
+
+                        <!-- Address 1 -->
+                        <div class="form-floating mb-3">
+                            {{ form.address1 }}
+                            <label for="{{ form.address1.id_for_label }}">Address Line 1</label>
+                        </div>
+
+                        <!-- Address 2 -->
+                        <div class="form-floating mb-3">
+                            {{ form.address2 }}
+                            <label for="{{ form.address2.id_for_label }}">Address Line 2</label>
+                        </div>
+
+                        <div class="row g-3">
+                            <!-- City -->
+                            <div class="col-md-6">
+                                <div class="form-floating mb-3">
+                                    {{ form.city }}
+                                    <label for="{{ form.city.id_for_label }}">City</label>
+                                </div>
+                            </div>
+                            <!-- State -->
+                            <div class="col-md-6">
+                                <div class="form-floating mb-3">
+                                    {{ form.state }}
+                                    <label for="{{ form.state.id_for_label }}">State / Province</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row g-3">
+                            <!-- Country -->
+                            <div class="col-md-7">
+                                <div class="form-floating mb-3">
+                                    {{ form.country }}
+                                    <label for="{{ form.country.id_for_label }}">Country</label>
+                                </div>
+                            </div>
+                            <!-- Zip Code -->
+                            <div class="col-md-5">
+                                <div class="form-floating mb-3">
+                                    {{ form.zip_code }}
+                                    <label for="{{ form.zip_code.id_for_label }}">Zip / Postal Code</label>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- Shipping Info -->
+            <div class="col-lg-6">
+                <div class="card shadow-lg border-0 rounded-4 overflow-hidden h-100">
+                    <div class="card-header bg-success bg-gradient p-4 border-0">
+                        <h4 class="mb-0 text-white"><i class="bi bi-truck me-2"></i>Shipping Information</h4>
+                    </div>
+                    <div class="card-body p-4 bg-light">
+
+                        <div class="row g-3">
+                            <!-- Full Name -->
+                            <div class="col-md-6">
+                                <div class="form-floating mb-3">
+                                    {{ shipping_form.shipping_full_name }}
+                                    <label for="{{ shipping_form.shipping_full_name.id_for_label }}">Full Name</label>
+                                </div>
+                            </div>
+                            <!-- Phone -->
+                            <div class="col-md-6">
+                                <div class="form-floating mb-3">
+                                    {{ shipping_form.shipping_phone }}
+                                    <label for="{{ shipping_form.shipping_phone.id_for_label }}">Phone</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Email -->
+                        <div class="form-floating mb-3">
+                            {{ shipping_form.shipping_email }}
+                            <label for="{{ shipping_form.shipping_email.id_for_label }}">Email Address</label>
+                        </div>
+
+                        <!-- Address 1 -->
+                        <div class="form-floating mb-3">
+                            {{ shipping_form.shipping_address1 }}
+                            <label for="{{ shipping_form.shipping_address1.id_for_label }}">Address Line 1</label>
+                        </div>
+
+                        <!-- Address 2 -->
+                        <div class="form-floating mb-3">
+                            {{ shipping_form.shipping_address2 }}
+                            <label for="{{ shipping_form.shipping_address2.id_for_label }}">Address Line 2</label>
+                        </div>
+
+                        <div class="row g-3">
+                            <!-- City -->
+                            <div class="col-md-6">
+                                <div class="form-floating mb-3">
+                                    {{ shipping_form.shipping_city }}
+                                    <label for="{{ shipping_form.shipping_city.id_for_label }}">City</label>
+                                </div>
+                            </div>
+                            <!-- State -->
+                            <div class="col-md-6">
+                                <div class="form-floating mb-3">
+                                    {{ shipping_form.shipping_state }}
+                                    <label for="{{ shipping_form.shipping_state.id_for_label }}">State /
+                                        Province</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row g-3">
+                            <!-- Country -->
+                            <div class="col-md-7">
+                                <div class="form-floating mb-3">
+                                    {{ shipping_form.shipping_country }}
+                                    <label for="{{ shipping_form.shipping_country.id_for_label }}">Country</label>
+                                </div>
+                            </div>
+                            <!-- Pincode -->
+                            <div class="col-md-5">
+                                <div class="form-floating mb-3">
+                                    {{ shipping_form.shipping_pincode }}
+                                    <label for="{{ shipping_form.shipping_pincode.id_for_label }}">Zip / Pincode</label>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Actions Row -->
+        <div class="row mt-5 justify-content-center">
+            <div class="col-lg-8">
+                <div class="d-flex flex-column flex-md-row gap-3 justify-content-center">
+                    <button type="submit" class="btn btn-primary btn-lg rounded-pill shadow-sm px-5 flex-grow-1">
+                        <i class="bi bi-save2 me-2"></i>Save All Changes
+                    </button>
+                    <a href="{% url 'update_user' %}" class="btn btn-outline-secondary btn-lg rounded-pill px-4">
+                        <i class="bi bi-person me-2"></i>Edit Account
+                    </a>
+                    <a href="{% url 'home' %}" class="btn btn-light btn-lg rounded-pill px-4 text-muted">
+                        <i class="bi bi-arrow-left me-2"></i>Home
+                    </a>
+                </div>
+            </div>
+        </div>
+
     </form>
 </div>
 {% endblock %}

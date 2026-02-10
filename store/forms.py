@@ -10,7 +10,7 @@ class UserInfoForm(forms.ModelForm):
 	city = forms.CharField(label="City", widget=forms.TextInput(attrs={'class':'form-control', 'placeholder':'City'}),required=False, max_length=100)
 	state = forms.CharField(label="State", widget=forms.TextInput(attrs={'class':'form-control', 'placeholder':'State'}),required=False, max_length=100)
 	country = forms.CharField(label="Country", widget=forms.TextInput(attrs={'class':'form-control', 'placeholder':'Country'}),required=False, max_length=100)
-	zip_code = forms.CharField(max_length=10)
+	zip_code = forms.CharField(label="Zip Code", widget=forms.TextInput(attrs={'class':'form-control', 'placeholder':'Zip Code'}), required=False, max_length=10)
 	class Meta:
 		model = Profile
 		fields = ('phone', 'address1', 'address2', 'city', 'state', 'country', 'zip_code')

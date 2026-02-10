@@ -70,27 +70,30 @@ def update_info(request):
     if not request.user.is_authenticated:
         messages.error(request, 'You must be logged in to update your profile.')
         return redirect('login')
-    else:
-        current_user = Profile.objects.get(user_id=request.user.id)
-        #Get Current User's Shipping Address
-        try:
-            shipping_user = ShippingAddress.objects.get(user_id=request.user.id)
-        except ShippingAddress.DoesNotExist:
-            shipping_user = None
 
-        form = UserInfoForm(instance=current_user)
-        shipping_form = ShippingForm(request.POST or None, instance=shipping_user)
-        if request.method == 'POST':
-            form = UserInfoForm(request.POST, instance=current_user)
-            if form.is_valid() and shipping_form.is_valid():
-                form.save()
-                shipping_address = shipping_form.save(commit=False)
-                shipping_address.user = request.user
-                shipping_address.save()
-                messages.success(request, 'Profile updated successfully.')
+    current_user = Profile.objects.get(user_id=request.user.id)
+    # Get Current User's Shipping Address
+    try:
+        shipping_user = ShippingAddress.objects.get(user_id=request.user.id)
+    except ShippingAddress.DoesNotExist:
+        shipping_user = None
+
+    if request.method == 'POST':
+        form = UserInfoForm(request.POST, instance=current_user)
+        shipping_form = ShippingForm(request.POST, instance=shipping_user)
+        if form.is_valid() and shipping_form.is_valid():
+            form.save()
+            shipping_address = shipping_form.save(commit=False)
+            shipping_address.user = request.user
+            shipping_address.save()
+            messages.success(request, 'Profile updated successfully.')
             return redirect('update_info')
         else:
-            messages.error(request, 'Error updating profile.')
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = UserInfoForm(instance=current_user)
+        shipping_form = ShippingForm(instance=shipping_user)
+
     return render(request, 'update_info.html', {'form': form, 'shipping_form': shipping_form})
 
 def update_password(request):
