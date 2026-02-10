@@ -1,64 +1,177 @@
 {% extends 'base.html' %}
+{% load static %}
+
 {% block content %}
-<!-- Header-->
-<header class="bg-dark py-5">
+<!-- Header -->
+<header class="bg-dark py-5 mb-5">
     <div class="container px-4 px-lg-5 my-5">
         <div class="text-center text-white">
-            <h1 class="display-4 fw-bolder">About</h1>
-            <p class="lead fw-normal text-white-50 mb-0">Welcome to Azacan</p>
+            <h1 class="display-4 fw-bolder">About Azacan</h1>
+            <p class="lead fw-normal text-white-50 mb-0">Your trusted online bookstore since day one</p>
         </div>
     </div>
 </header>
-<div class="container px-4 px-lg-5">
-    <div class="row justify-content-center">
-        <div class="col">
-            <p align="justify">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus tincidunt ligula sed orci imperdiet
-                tristique. Mauris id felis metus. Nam lacinia ante consectetur augue imperdiet sodales. Morbi pretium
-                dapibus luctus. Cras pellentesque, nunc ut vestibulum tincidunt, massa nisi vestibulum ex, quis
-                malesuada
-                risus lacus id ligula. Vivamus semper ante eget nibh ultricies pretium. Nunc ultrices maximus varius.
-                <br /><br />
-                Etiam in convallis massa. Proin tincidunt id quam et interdum. Aenean auctor in arcu eu scelerisque.
-                Nunc
-                dignissim enim in mi aliquet, eu ornare mauris tristique. Nunc rhoncus dui nec augue sollicitudin, sit
-                amet
-                rutrum mi venenatis. Nam vel malesuada magna, eget faucibus nisl. Class aptent taciti sociosqu ad litora
-                torquent per conubia nostra, per inceptos himenaeos. Integer aliquam metus dui, ac egestas enim maximus
-                in.
-                Sed ut consectetur mi, sit amet luctus odio. Ut in interdum odio. Quisque blandit sagittis sollicitudin.
-                Ut
-                sit amet feugiat lacus. Ut pellentesque ex ut orci tincidunt, vel pretium tortor tincidunt. Integer at
-                risus
-                consectetur, hendrerit nisl sit amet, convallis justo. Suspendisse euismod pretium dapibus.
-                <br /><br />
-                Curabitur sodales porttitor luctus. Mauris vitae dictum erat. Mauris velit augue, sagittis a lacus et,
-                mollis mattis mauris. Sed ligula mauris, viverra nec urna eget, imperdiet blandit ex. Donec a orci
-                lorem.
-                Aenean laoreet leo non justo lobortis, a venenatis nibh porttitor. Aenean nec diam quam.
-                <br /><br />
-                Nunc non magna at orci gravida maximus. Vestibulum imperdiet lorem justo. Orci varius natoque penatibus
-                et
-                magnis dis parturient montes, nascetur ridiculus mus. Vestibulum vulputate dolor quam, at cursus velit
-                dapibus eget. Mauris vel tristique augue. Maecenas sit amet erat elementum, placerat sem sit amet,
-                accumsan
-                mi. Aenean tempor eros vel interdum eleifend. In sit amet aliquam nibh, at molestie enim. Phasellus
-                elementum pharetra nisi, et maximus augue pulvinar eu. Pellentesque ac orci ultricies, gravida libero
-                sit
-                amet, semper lorem. Phasellus ac leo vitae mi faucibus tincidunt sed vel urna. Aenean nec vehicula enim.
-                Pellentesque vel sapien purus. Nunc lacus orci, consectetur non lacus eget, pulvinar posuere tortor.
-                <br /><br />
-                Donec arcu erat, pretium lobortis tellus at, feugiat consectetur tortor. Phasellus at dolor pharetra,
-                malesuada lorem ut, pulvinar nisl. Mauris arcu enim, mollis eu volutpat at, venenatis ultricies arcu.
-                Duis
-                et purus nec felis congue varius. Sed ultrices quis lorem et consectetur. Donec iaculis sit amet augue
-                quis
-                tincidunt. Integer rutrum convallis dictum. Nam a velit non dolor facilisis interdum in quis leo. Proin
-                tristique leo nec dapibus malesuada. Praesent nec metus tempor magna efficitur tristique. Vestibulum
-                ante
-                ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae;
-                <br /><br />
+
+<!-- Mission Section -->
+<div class="container px-4 px-lg-5 pb-5">
+    <div class="row justify-content-center mb-5">
+        <div class="col-lg-8 text-center">
+            <h2 class="fw-bold mb-3">Our Mission</h2>
+            <div class="border-bottom border-primary border-3 w-25 mx-auto mb-4"></div>
+            <p class="lead text-muted">
+                At Azacan, we believe that every book has the power to inspire, educate, and transform.
+                Our mission is to connect readers with the stories and knowledge they love — effortlessly.
             </p>
+        </div>
+    </div>
+
+    <!-- Values Cards -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm rounded-4 text-center p-4">
+                <div class="card-body">
+                    <div class="bg-primary bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-4"
+                        style="width: 80px; height: 80px;">
+                        <i class="bi bi-book text-primary" style="font-size: 2rem;"></i>
+                    </div>
+                    <h5 class="fw-bold">Curated Selection</h5>
+                    <p class="text-muted mb-0">We handpick every title in our catalog to ensure quality, diversity, and
+                        relevance for every type of reader.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm rounded-4 text-center p-4">
+                <div class="card-body">
+                    <div class="bg-success bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-4"
+                        style="width: 80px; height: 80px;">
+                        <i class="bi bi-robot text-success" style="font-size: 2rem;"></i>
+                    </div>
+                    <h5 class="fw-bold">AI-Powered Recommendations</h5>
+                    <p class="text-muted mb-0">Our intelligent recommendation engine uses your reading history to
+                        suggest books you'll truly enjoy.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm rounded-4 text-center p-4">
+                <div class="card-body">
+                    <div class="bg-warning bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-4"
+                        style="width: 80px; height: 80px;">
+                        <i class="bi bi-truck text-warning" style="font-size: 2rem;"></i>
+                    </div>
+                    <h5 class="fw-bold">Fast Delivery</h5>
+                    <p class="text-muted mb-0">From checkout to your doorstep, we ensure your books arrive quickly and
+                        in perfect condition.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Story Section -->
+    <div class="row align-items-center g-5 mb-5">
+        <div class="col-lg-6">
+            <div class="card border-0 bg-dark text-white rounded-4 overflow-hidden shadow-lg">
+                <div class="card-body p-5">
+                    <span class="badge bg-primary rounded-pill px-3 py-2 mb-3">Our Story</span>
+                    <h3 class="fw-bold mb-3">Born from a Love of Reading</h3>
+                    <p class="mb-3 opacity-75">
+                        Azacan started with a simple idea: make great books accessible to everyone.
+                        What began as a small local bookshop has grown into a digital platform serving
+                        readers across the globe.
+                    </p>
+                    <p class="mb-0 opacity-75">
+                        Today, our catalog spans thousands of titles across every genre — from classic
+                        literature to cutting-edge technology, from children's stories to academic research.
+                        We combine the warmth of a traditional bookstore with the convenience and intelligence
+                        of modern technology.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card border-0 bg-light rounded-4 overflow-hidden shadow-sm">
+                <div class="card-body p-5">
+                    <h3 class="fw-bold mb-4">Why Choose Azacan?</h3>
+                    <ul class="list-unstyled">
+                        <li class="d-flex align-items-start mb-3">
+                            <i class="bi bi-check-circle-fill text-success me-3 mt-1"></i>
+                            <div>
+                                <strong>Smart Search</strong>
+                                <p class="text-muted small mb-0">Find books by keyword or let our semantic search
+                                    understand what you're really looking for.</p>
+                            </div>
+                        </li>
+                        <li class="d-flex align-items-start mb-3">
+                            <i class="bi bi-check-circle-fill text-success me-3 mt-1"></i>
+                            <div>
+                                <strong>Personalized Experience</strong>
+                                <p class="text-muted small mb-0">AI-driven recommendations that improve with every
+                                    purchase you make.</p>
+                            </div>
+                        </li>
+                        <li class="d-flex align-items-start mb-3">
+                            <i class="bi bi-check-circle-fill text-success me-3 mt-1"></i>
+                            <div>
+                                <strong>Secure Checkout</strong>
+                                <p class="text-muted small mb-0">Your data is safe with us. Shop with confidence every
+                                    time.</p>
+                            </div>
+                        </li>
+                        <li class="d-flex align-items-start mb-0">
+                            <i class="bi bi-check-circle-fill text-success me-3 mt-1"></i>
+                            <div>
+                                <strong>Growing Catalog</strong>
+                                <p class="text-muted small mb-0">New titles added regularly to keep your reading list
+                                    fresh and exciting.</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Section -->
+    <div class="row g-4 mb-5">
+        <div class="col-6 col-md-3">
+            <div class="text-center p-4">
+                <h2 class="fw-bolder text-primary mb-1">5K+</h2>
+                <p class="text-muted small text-uppercase fw-semibold mb-0">Books Available</p>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="text-center p-4">
+                <h2 class="fw-bolder text-primary mb-1">1K+</h2>
+                <p class="text-muted small text-uppercase fw-semibold mb-0">Happy Customers</p>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="text-center p-4">
+                <h2 class="fw-bolder text-primary mb-1">50+</h2>
+                <p class="text-muted small text-uppercase fw-semibold mb-0">Categories</p>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="text-center p-4">
+                <h2 class="fw-bolder text-primary mb-1">24/7</h2>
+                <p class="text-muted small text-uppercase fw-semibold mb-0">Support</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 bg-primary bg-gradient text-white rounded-4 shadow-lg overflow-hidden">
+                <div class="card-body text-center p-5">
+                    <h3 class="fw-bold mb-3">Ready to Discover Your Next Favorite Book?</h3>
+                    <p class="mb-4 opacity-75">Browse our catalog and let Azacan's AI find the perfect read for you.</p>
+                    <a href="{% url 'home' %}" class="btn btn-light btn-lg rounded-pill px-5 shadow-sm fw-bold">
+                        <i class="bi bi-shop me-2"></i>Start Browsing
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
 </div>
