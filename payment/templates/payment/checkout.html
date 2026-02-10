@@ -1,148 +1,144 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block content %}
-<header class="bg-dark py-5">
+<!-- Header -->
+<header class="bg-dark py-5 mb-5">
     <div class="container px-4 px-lg-5 my-5">
         <div class="text-center text-white">
-            <h1 class="display-4 fw-bold">Checkout</h1>
-            <p class="lead fw-normal text-white-50 mb-0">Review your order and complete the payment</p>
+            <h1 class="display-4 fw-bolder">Checkout</h1>
+            <p class="lead fw-normal text-white-50 mb-0">Review your shipping details and complete your order</p>
         </div>
     </div>
 </header>
-<div class="container center align-items-center justify-content-center ">
-    <div class="row center align-items-center justify-content-center">
-        <div class="col-md-8 center align-items-center justify-content-center">
-            <div class="card center align-items-center justify-content-center">
-                <div class="card-body center align-items-center justify-content-center">
-                    <h1>Order Summary</h1>
-                    <table class="table center align-items-center justify-content-center">
-                        <thead>
-                            <tr>
-                                <th>Product</th>
-                                <th>Price</th>
-                                <th>Quantity</th>
-                                <th>Subtotal</th>
-                                <th>Remove</th>
-                                <th>Update</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% if cart %}
-                            {% for item in cart %}
-                            <tr>
-                                <td> {{ item.product.name }}</td>
-                                <td>
-                                    {% if item.product.is_sale %}
-                                    <strike>${{ item.product.price }}</strike>
-                                    &nbsp; ${{ item.product.sale_price }}
-                                    {% else %}
-                                    ${{ item.product.price }}
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <select id="select{{ item.product.id }}" class="form-select">
-                                        <option value="{{ item.quantity }}" selected>{{ item.quantity }}</option>
-                                        <option value="1">1</option>
-                                        <option value="2">2</option>
-                                        <option value="3">3</option>
-                                        <option value="4">4</option>
-                                        <option value="5">5</option>
-                                    </select>
-                                </td>
-                                <td> ${{ item.total_price }} </td>
-                                <td>
-                                    <button type="button" data-index="{{ item.product.id }}"
-                                        class="btn btn-danger remove-cart">Remove</button>
-                                </td>
-                                <td>
-                                    <button type="button" data-index="{{ item.product.id }}"
-                                        class="btn btn-primary update-cart">Update</button>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                            <tr>
-                                <td colspan="3" class="text-end"><strong>Total:</strong></td>
-                                <td colspan="3"><strong>${{ totals }}</strong></td>
-                            </tr>
-                            {% else %}
-                            <tr>
-                                <td colspan="4">No products in cart</td>
-                            </tr>
-                            {% endif %}
-                        </tbody>
-                    </table>
+
+<div class="container mb-5">
+    <div class="row g-5">
+        <!-- Main Content: Shipping Form -->
+        <div class="col-md-7 col-lg-8">
+            <h4 class="mb-3">Shipping Address</h4>
+
+            <div class="card p-4 shadow-sm border-0 bg-light">
+                <form method="POST" action="{% url 'billing_info' %}" class="needs-validation" novalidate>
+                    {% csrf_token %}
+
+                    <div class="row g-3">
+                        <!-- Full Name -->
+                        <div class="col-12">
+                            <label for="{{ form.shipping_full_name.id_for_label }}" class="form-label">Full Name</label>
+                            {{ form.shipping_full_name }}
+                            <div class="invalid-feedback">Valid full name is required.</div>
+                        </div>
+
+                        <!-- Email -->
+                        <div class="col-12">
+                            <label for="{{ form.shipping_email.id_for_label }}" class="form-label">Email <span
+                                    class="text-muted">(Optional)</span></label>
+                            {{ form.shipping_email }}
+                            <div class="invalid-feedback">Please enter a valid email address for shipping updates.</div>
+                        </div>
+
+                        <!-- Phone -->
+                        <div class="col-12">
+                            <label for="{{ form.shipping_phone.id_for_label }}" class="form-label">Phone</label>
+                            {{ form.shipping_phone }}
+                            <div class="invalid-feedback">Please enter a valid phone number.</div>
+                        </div>
+
+
+                        <!-- Address -->
+                        <div class="col-12">
+                            <label for="{{ form.shipping_address1.id_for_label }}" class="form-label">Address</label>
+                            {{ form.shipping_address1 }}
+                            <div class="invalid-feedback">Please enter your shipping address.</div>
+                        </div>
+
+                        <!-- Address 2 -->
+                        <div class="col-12">
+                            <label for="{{ form.shipping_address2.id_for_label }}" class="form-label">Address 2 <span
+                                    class="text-muted">(Optional)</span></label>
+                            {{ form.shipping_address2 }}
+                        </div>
+
+                        <!-- Country -->
+                        <div class="col-md-5">
+                            <label for="{{ form.shipping_country.id_for_label }}" class="form-label">Country</label>
+                            {{ form.shipping_country }}
+                            <div class="invalid-feedback">Please select a valid country.</div>
+                        </div>
+
+                        <!-- State -->
+                        <div class="col-md-4">
+                            <label for="{{ form.shipping_state.id_for_label }}" class="form-label">State</label>
+                            {{ form.shipping_state }}
+                            <div class="invalid-feedback">Please provide a valid state.</div>
+                        </div>
+
+                        <!-- Zip -->
+                        <div class="col-md-3">
+                            <label for="{{ form.shipping_pincode.id_for_label }}" class="form-label">Zip/Code</label>
+                            {{ form.shipping_pincode }}
+                            <div class="invalid-feedback">Zip code required.</div>
+                        </div>
+
+                        <!-- City -->
+                        <div class="col-md-12">
+                            <label for="{{ form.shipping_city.id_for_label }}" class="form-label">City</label>
+                            {{ form.shipping_city }}
+                            <div class="invalid-feedback">City required.</div>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <button class="w-100 btn btn-primary btn-lg rounded-pill" type="submit">Continue to Billing</button>
+                    <a href="{% url 'cart_summary' %}"
+                        class="w-100 btn btn-outline-secondary btn-lg rounded-pill mt-2">Back to Cart</a>
+                </form>
+            </div>
+
+            {% if recommendations %}
+            <div class="mt-5">
+                <div class="alert alert-info shadow-sm" role="alert">
+                    <h5 class="alert-heading"><i class="bi bi-lightbulb"></i> Recommended for You</h5>
+                    <hr>
+                    <div class="small">
+                        {{ recommendations|safe }}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar: Cart Summary -->
+        <div class="col-md-5 col-lg-4">
+            <div class="card shadow-sm border-0 position-sticky" style="top: 2rem;">
+                <div class="card-header bg-white border-bottom py-3">
+                    <h4 class="d-flex justify-content-between align-items-center mb-0">
+                        <span class="text-primary">Your cart</span>
+                        <span class="badge bg-primary rounded-pill">{{ cart|length }}</span>
+                    </h4>
+                </div>
+                <div class="card-body p-0">
+                    <ul class="list-group list-group-flush">
+                        {% for item in cart %}
+                        <li class="list-group-item d-flex justify-content-between lh-sm py-3">
+                            <div class="me-2">
+                                <h6 class="my-0">{{ item.product.name }}</h6>
+                                <small class="text-muted">Qty: {{ item.quantity }}</small>
+                            </div>
+                            <span class="text-muted">{{ item.total_price }}€</span>
+                        </li>
+                        {% endfor %}
+
+                        <li class="list-group-item d-flex justify-content-between py-3 bg-light">
+                            <span class="fw-bold">Total (USD)</span>
+                            <strong class="text-primary">{{ totals }}€</strong>
+                        </li>
+                    </ul>
                 </div>
             </div>
         </div>
     </div>
-    <div class="card  center align-items-center justify-content-center">
-        <div class="col-md-8 center align-items-center justify-content-center"></div>
-        <div class="card-header center align-items-center justify-content-center">
-            Shipping Information
-        </div>
-        <div class="card-body center align-items-center justify-content-center">
-            <form method="post">
-                {% csrf_token %}
-                {{ form.as_p }}
-                <a href="" class="btn btn-primary">Continue To Billing</a>
-            </form>
-        </div>
-    </div>
-
-    {% if recommendations %}
-    <div class="card-body center align-items-center justify-content-center">
-        <h2>Recommendations</h2>
-
-        {{ recommendations|safe }}
-
-    </div>
-    {% endif %}
 </div>
-<a href="" class="btn btn-success center align-items-center justify-content-center">Continue To Billing</a>
-</div>
-
-<script>
-    // Update Cart
-    $(document).on('click', '.update-cart', function (e) {
-        e.preventDefault();
-        var productid = $(this).data('index');
-        $.ajax({
-            url: '{% url "cart_update" %}',
-            type: 'POST',
-            data: {
-                'product_id': $(this).data('index'),
-                'product_qty': $('#select' + $(this).data('index') + ' option:selected').text(),
-                'csrfmiddlewaretoken': '{{ csrf_token }}',
-                'action': 'post',
-            },
-            success: function (response) {
-                location.reload();
-            },
-            error: function (response) {
-                console.log(response);
-            }
-        });
-    });
-
-    // Remove from Cart
-    $(document).on('click', '.remove-cart', function (e) {
-        e.preventDefault();
-        var productId = $(this).data('index');
-        $.ajax({
-            url: '{% url "cart_delete" %}',
-            type: 'POST',
-            data: {
-                'product_id': productId,
-                'csrfmiddlewaretoken': '{{ csrf_token }}',
-                'action': 'post',
-            },
-            success: function (response) {
-                location.reload();
-            },
-            error: function (response) {
-                console.log(response);
-            }
-        });
-    });
-</script>
 {% endblock %}

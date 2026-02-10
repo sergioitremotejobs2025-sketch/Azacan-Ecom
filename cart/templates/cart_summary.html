@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block content %}
-
+<!-- FIXED VERSION -->
 <!-- Header -->
 <header class="bg-dark py-5 mb-5">
     <div class="container px-4 px-lg-5 my-5">
@@ -65,16 +65,17 @@
                             <label class="small text-muted mb-1">Quantity</label>
                             <div class="input-group input-group-sm">
                                 <select class="form-select text-center" id="select{{ item.product.id }}">
-                                    <option value="1" {% if item.quantity==1 %}selected{% endif %}>1</option>
-                                    <option value="2" {% if item.quantity==2 %}selected{% endif %}>2</option>
-                                    <option value="3" {% if item.quantity==3 %}selected{% endif %}>3</option>
-                                    <option value="4" {% if item.quantity==4 %}selected{% endif %}>4</option>
-                                    <option value="5" {% if item.quantity==5 %}selected{% endif %}>5</option>
-                                    <option value="6" {% if item.quantity==6 %}selected{% endif %}>6</option>
-                                    <option value="7" {% if item.quantity==7 %}selected{% endif %}>7</option>
-                                    <option value="8" {% if item.quantity==8 %}selected{% endif %}>8</option>
-                                    <option value="9" {% if item.quantity==9 %}selected{% endif %}>9</option>
-                                    <option value="10" {% if item.quantity==10 %}selected{% endif %}>10</option>
+                                    <!-- Manually verify spaces are present -->
+                                    <option value="1" {% if item.quantity == 1 %}selected{% endif %}>1</option>
+                                    <option value="2" {% if item.quantity == 2 %}selected{% endif %}>2</option>
+                                    <option value="3" {% if item.quantity == 3 %}selected{% endif %}>3</option>
+                                    <option value="4" {% if item.quantity == 4 %}selected{% endif %}>4</option>
+                                    <option value="5" {% if item.quantity == 5 %}selected{% endif %}>5</option>
+                                    <option value="6" {% if item.quantity == 6 %}selected{% endif %}>6</option>
+                                    <option value="7" {% if item.quantity == 7 %}selected{% endif %}>7</option>
+                                    <option value="8" {% if item.quantity == 8 %}selected{% endif %}>8</option>
+                                    <option value="9" {% if item.quantity == 9 %}selected{% endif %}>9</option>
+                                    <option value="10" {% if item.quantity == 10 %}selected{% endif %}>10</option>
                                     <!-- Keep current quantity if > 10 -->
                                     {% if item.quantity > 10 %}
                                     <option value="{{ item.quantity }}" selected>{{ item.quantity }}</option>
