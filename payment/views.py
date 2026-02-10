@@ -15,11 +15,12 @@ def checkout(request):
     totals = cart.car_total()
     
     recommendations = []
-    try:
-        if request.user.is_authenticated:
-            recommendations = get_recommendations(request.user.id)
-    except Exception as e:
-        print(f"Error getting recommendations: {e}")
+    # Recommendations now loaded asynchronously via HTMX/AJAX
+    # try:
+    #     if request.user.is_authenticated:
+    #         recommendations = get_recommendations(request.user.id)
+    # except Exception as e:
+    #     print(f"Error getting recommendations: {e}")
 
     form = None
 

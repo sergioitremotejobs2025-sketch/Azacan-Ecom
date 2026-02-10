@@ -43,7 +43,7 @@ def get_recommendations(user_id, top_k=3):
         None: All exceptions are caught and returned as user-friendly messages
     """
     # Check cache first
-    cache_key = f"recommendations_{user_id}_{top_k}"
+    cache_key = f"recommendations_v2_{user_id}_{top_k}"
     cached_result = cache.get(cache_key)
     if cached_result:
         logger.info(f"Returning cached recommendations for user {user_id}")
@@ -86,49 +86,64 @@ def get_recommendations(user_id, top_k=3):
             f"Title: {b.title}, Author: {b.author}, Description: {b.description}" 
             for b in similar_books
         ])
-        #context = "Title: test, Author: test, Description: test"
-        #return context
+        
         # LLM generation
         try:
             llm = ChatOllama(model="llama3.1:8b", base_url=os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434'))
             prompt = ChatPromptTemplate.from_template(
-            """You are an expert at formatting book recommendations in clean HTML.
-
-                Here is a list of books to recommend:
-
+            """You are a helpful book expert.
+            
+                Here are {count} books recommended for a user:
                 {context}
 
-                Return ONLY a valid HTML snippet containing an unordered list of recommendations.
-                Use this exact structure:
-                - Start directly with <ul>
-                - Each book as <li><strong>Title</strong> by Author - short 1-sentence reason -- Add an detailed explanation of why each book is recommended.</li>
-                - End with </ul>
-
-                Do NOT include any text outside the HTML.
-                Do NOT use markdown, code blocks, or backticks.
-                Do NOT add headings, paragraphs, or explanations.
-                Do NOT wrap in ```html tags.
-
-                Begin your response directly with <ul>"""
+                Write a short, engaging 1-sentence reason for recommending EACH book.
+                
+                Return the reasons as a list valid JSON strings.
+                Example format: ["Reason for book 1", "Reason for book 2", "Reason for book 3"]
+                
+                Strictly return ONLY the JSON list. No other text.
+            """
             )
             chain = prompt | llm | StrOutputParser()
-            recommendation = chain.invoke({"context": context})
+            response_text = chain.invoke({"context": context, "count": len(similar_books)})
             
-            # Cache the result for 1 hour
-            cache.set(cache_key, recommendation, 3600)
+            import json
+            # Attempt to parse JSON
+            try:
+                # Clean up potential markdown code blocks
+                clean_json = response_text.replace("```json", "").replace("```", "").strip()
+                reasons = json.loads(clean_json)
+            except json.JSONDecodeError:
+                # Fallback if JSON fails: split by newlines as a heuristic or just use a default
+                logger.warning(f"Failed to parse LLM JSON response: {response_text}")
+                reasons = [f"Recommended because it's similar to your taste." for _ in similar_books]
+
+            # Ensure we have enough reasons
+            if len(reasons) < len(similar_books):
+                 reasons.extend([f"A great choice based on your history." for _ in range(len(similar_books) - len(reasons))])
             
-            return recommendation
+            # Construct structured result
+            structured_recommendations = []
+            for i, book in enumerate(similar_books):
+                structured_recommendations.append({
+                    'book': book,
+                    'reason': reasons[i]
+                })
+
+            # Cache the structured result (pickleable)
+            cache.set(cache_key, structured_recommendations, 3600)
+            
+            return structured_recommendations
             
         except Exception as llm_error:
             logger.error(f"LLM generation failed for user {user_id}: {llm_error}")
-            # Fallback: return simple list if LLM fails
-            fallback = "Based on your reading history, you might enjoy:\n\n"
-            fallback += "\n".join([f"- {b.title} by {b.author}" for b in similar_books])
-            return fallback
+            # Fallback: return structure with default reasons
+            return [{'book': b, 'reason': "Recommended based on your history."} for b in similar_books]
     
     except Exception as e:
         logger.error(f"Error generating recommendations for user {user_id}: {e}")
-        return "We're having trouble generating recommendations right now. Please try again later."
+        return [] # Return empty list on error
+
 
 def get_recommendations_by_book_title(book_title: str, top_k: int = 5) -> str:
     """

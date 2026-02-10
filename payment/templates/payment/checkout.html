@@ -96,17 +96,38 @@
                         class="w-100 btn btn-outline-secondary btn-lg rounded-pill mt-2">Back to Cart</a>
                 </form>
             </div>
-
-            {% if recommendations %}
-            <div class="mt-5">
-                <div class="alert alert-info shadow-sm" role="alert">
-                    <h5 class="alert-heading"><i class="bi bi-lightbulb"></i> Recommended for You</h5>
-                    <hr>
-                    <div class="small">
-                        {{ recommendations|safe }}
+            <!-- Async Recommendations -->
+            {% if user.is_authenticated %}
+            <div id="recommendations-container" class="mt-5">
+                <div class="card shadow-sm border-0">
+                    <div class="card-body text-center py-4">
+                        <div class="spinner-border text-info" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="text-muted mt-2 mb-0">Personalizing recommendations...</p>
                     </div>
                 </div>
             </div>
+
+            <script>
+                $(document).ready(function () {
+                    $.ajax({
+                        url: "{% url 'cart_recommendations' %}",
+                        type: "GET",
+                        success: function (data) {
+                            if (data && data.trim() !== "") {
+                                $("#recommendations-container").html(data).hide().fadeIn();
+                            } else {
+                                $("#recommendations-container").remove();
+                            }
+                        },
+                        error: function (xhr, status, error) {
+                            console.log("Error loading recommendations:", error);
+                            $("#recommendations-container").remove();
+                        }
+                    });
+                });
+            </script>
             {% endif %}
         </div>
 
@@ -141,4 +162,27 @@
         </div>
     </div>
 </div>
+<script>
+    $(document).on('click', '.add-rec-to-cart', function (e) {
+        e.preventDefault();
+        var productid = $(this).data('id');
+
+        $.ajax({
+            url: '{% url "cart_add" %}',
+            type: 'POST',
+            data: {
+                'product_id': productid,
+                'product_qty': 1,
+                'csrfmiddlewaretoken': '{{ csrf_token }}',
+                'action': 'post',
+            },
+            success: function (response) {
+                location.reload();
+            },
+            error: function (response) {
+                console.log(response);
+            }
+        });
+    });
+</script>
 {% endblock %}
