@@ -12,7 +12,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
 # Configuration
-BATCH_SIZE = 20  # Number of products to process in this run
+# Configuration
 DEFAULT_CATEGORY_NAME = "Books" # The catch-all category we want to move items FROM
 
 # Predefined categories to guide the LLM
@@ -67,7 +67,7 @@ def auto_categorize():
     
     # Filter products that need categorization
     # We take a slice to avoid processing 9000 items in one go during testing
-    products_to_process = Product.objects.filter(category=default_cat)[:BATCH_SIZE]
+    products_to_process = Product.objects.filter(category=default_cat)
     
     if not products_to_process:
         print("No products found to categorize (or all are already categorized).")
