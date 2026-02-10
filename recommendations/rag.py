@@ -43,7 +43,7 @@ def get_recommendations(user_id, top_k=3):
         None: All exceptions are caught and returned as user-friendly messages
     """
     # Check cache first
-    cache_key = f"recommendations_v2_{user_id}_{top_k}"
+    cache_key = f"recommendations_v4_{user_id}_{top_k}"
     cached_result = cache.get(cache_key)
     if cached_result:
         logger.info(f"Returning cached recommendations for user {user_id}")
@@ -72,14 +72,22 @@ def get_recommendations(user_id, top_k=3):
         # Calculate average embedding
         average_embedding = np.mean(valid_embeddings, axis=0)
         
-        # Retrieve similar books (exclude past purchases)
-        similar_books = Book.objects.exclude(id__in=past_books).annotate(
+        # Retrieve larger pool of similar books for diversity (e.g. top 20)
+        candidate_books = list(Book.objects.exclude(id__in=past_books).annotate(
             distance=CosineDistance('embedding', average_embedding)
-        ).order_by('distance')[:top_k]
-        #return similar_books
+        ).order_by('distance')[:20])
         
-        if not similar_books:
+        if not candidate_books:
             return "No similar books found. Try browsing our catalog for new discoveries!"
+            
+        import random
+        # Randomly sample top_k from the candidates to provide variety
+        # If candidates are fewer than top_k, take all
+        sample_size = min(len(candidate_books), top_k)
+        similar_books = random.sample(candidate_books, sample_size)
+        
+        # Sort them back by distance (optional, but keeps most relevant ones generally)
+        similar_books.sort(key=lambda x: x.distance)
         
         # Format retrieved books for context
         context = "\n".join([
