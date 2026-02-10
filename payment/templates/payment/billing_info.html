@@ -12,23 +12,38 @@
     </div>
 </header>
 
-<div class="container text-center">
-    <h2>Enter Payment Details</h2>
-    <p class="text-muted">This is a placeholder for the billing integration.</p>
+<div class="container text-center mb-5">
+    <h2>Review Your Order</h2>
+    <p class="text-muted">Please review your shipping details before placing the order.</p>
 
-    <div class="card p-4 mx-auto" style="max-width: 600px;">
-        <h5>Review Shipping Info</h5>
-        <ul class="list-unstyled text-start">
+    <div class="card p-4 mx-auto shadow-sm" style="max-width: 600px;">
+        <h5 class="mb-3 text-start border-bottom pb-2">Shipping Details</h5>
+        <ul class="list-unstyled text-start mb-4">
             <li><strong>Name:</strong> {{ shipping_info.shipping_full_name }}</li>
             <li><strong>Email:</strong> {{ shipping_info.shipping_email }}</li>
-            <li><strong>Address:</strong> {{ shipping_info.shipping_address1 }}, {{ shipping_info.shipping_city }}</li>
+            <li><strong>Phone:</strong> {{ shipping_info.shipping_phone }}</li>
+            <li><strong>Address:</strong><br>
+                {{ shipping_info.shipping_address1 }}<br>
+                {% if shipping_info.shipping_address2 %}{{ shipping_info.shipping_address2 }}<br>{% endif %}
+                {{ shipping_info.shipping_city }}, {{ shipping_info.shipping_state }} {{ shipping_info.shipping_pincode
+                }}<br>
+                {{ shipping_info.shipping_country }}
+            </li>
         </ul>
 
-        <div class="alert alert-warning">
-            Payment processing not yet implemented.
+        <div class="alert alert-info small text-start">
+            <i class="bi bi-info-circle"></i> Payment method integration (e.g., Stripe, PayPal) would go here. For now,
+            this is a simulation.
         </div>
 
-        <a href="{% url 'payment_success' %}" class="btn btn-success btn-lg">Complete Order (Simulate)</a>
+        <h4 class="mb-3">Total: {{ totals }}€</h4>
+
+        <form method="POST" action="{% url 'process_order' %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-success btn-lg w-100 rounded-pill">
+                <i class="bi bi-credit-card"></i> Pay & Place Order
+            </button>
+        </form>
     </div>
 </div>
 {% endblock %}
