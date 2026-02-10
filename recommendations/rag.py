@@ -43,13 +43,16 @@ def get_recommendations(user_id, top_k=3):
         None: All exceptions are caught and returned as user-friendly messages
     """
     # Check cache first
-    cache_key = f"recommendations_v4_{user_id}_{top_k}"
+    cache_key = f"recommendations_v5_{user_id}_{top_k}"
     cached_result = cache.get(cache_key)
     if cached_result:
         logger.info(f"Returning cached recommendations for user {user_id}")
         return cached_result
     
     try:
+        # Import Product model to map Book -> Product via reference
+        from store.models import Product
+        
         # Validate user exists
         if not User.objects.filter(id=user_id).exists():
             return "Invalid user ID."
@@ -82,12 +85,18 @@ def get_recommendations(user_id, top_k=3):
             
         import random
         # Randomly sample top_k from the candidates to provide variety
-        # If candidates are fewer than top_k, take all
         sample_size = min(len(candidate_books), top_k)
         similar_books = random.sample(candidate_books, sample_size)
         
-        # Sort them back by distance (optional, but keeps most relevant ones generally)
+        # Sort them back by distance
         similar_books.sort(key=lambda x: x.distance)
+        
+        # Build a reference -> Product ID lookup for the selected books
+        book_references = [b.reference for b in similar_books if b.reference]
+        product_map = {}
+        if book_references:
+            products = Product.objects.filter(reference__in=book_references).values_list('reference', 'id')
+            product_map = {ref: pid for ref, pid in products}
         
         # Format retrieved books for context
         context = "\n".join([
@@ -116,37 +125,38 @@ def get_recommendations(user_id, top_k=3):
             response_text = chain.invoke({"context": context, "count": len(similar_books)})
             
             import json
-            # Attempt to parse JSON
             try:
-                # Clean up potential markdown code blocks
                 clean_json = response_text.replace("```json", "").replace("```", "").strip()
                 reasons = json.loads(clean_json)
             except json.JSONDecodeError:
-                # Fallback if JSON fails: split by newlines as a heuristic or just use a default
                 logger.warning(f"Failed to parse LLM JSON response: {response_text}")
                 reasons = [f"Recommended because it's similar to your taste." for _ in similar_books]
 
-            # Ensure we have enough reasons
             if len(reasons) < len(similar_books):
                  reasons.extend([f"A great choice based on your history." for _ in range(len(similar_books) - len(reasons))])
             
-            # Construct structured result
+            # Construct structured result with Product ID for cart integration
             structured_recommendations = []
             for i, book in enumerate(similar_books):
-                structured_recommendations.append({
-                    'book': book,
-                    'reason': reasons[i]
-                })
+                product_id = product_map.get(book.reference)
+                if product_id:  # Only include if we can map to a Product
+                    structured_recommendations.append({
+                        'book': book,
+                        'product_id': product_id,
+                        'reason': reasons[i]
+                    })
 
-            # Cache the structured result (pickleable)
             cache.set(cache_key, structured_recommendations, 3600)
-            
             return structured_recommendations
             
         except Exception as llm_error:
             logger.error(f"LLM generation failed for user {user_id}: {llm_error}")
-            # Fallback: return structure with default reasons
-            return [{'book': b, 'reason': "Recommended based on your history."} for b in similar_books]
+            fallback = []
+            for b in similar_books:
+                product_id = product_map.get(b.reference)
+                if product_id:
+                    fallback.append({'book': b, 'product_id': product_id, 'reason': "Recommended based on your history."})
+            return fallback
     
     except Exception as e:
         logger.error(f"Error generating recommendations for user {user_id}: {e}")

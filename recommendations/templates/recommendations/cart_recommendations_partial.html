@@ -9,17 +9,16 @@
             <div class="d-flex justify-content-between align-items-start">
                 <div class="me-3">
                     <h6 class="mb-1 fw-bold">
-                        <a href="{% url 'product' rec.book.id %}" class="text-decoration-none text-dark">{{
+                        <a href="{% url 'product' rec.product_id %}" class="text-decoration-none text-dark">{{
                             rec.book.title }}</a>
                     </h6>
-                    <small class="text-muted d-block mb-1">by {{ rec.book.author }}</small>
+                    <small class="text-muted d-block mb-1">by {{ rec.book.author|default:"Unknown" }}</small>
                     <p class="mb-0 small fst-italic text-secondary">
                         <i class="bi bi-chat-quote me-1"></i>"{{ rec.reason }}"
                     </p>
                 </div>
-                <!-- data-id is crucial for the JS handler -->
                 <button class="btn btn-sm btn-outline-primary add-rec-to-cart text-nowrap rounded-pill px-3"
-                    data-id="{{ rec.book.id }}">
+                    data-id="{{ rec.product_id }}">
                     <i class="bi bi-cart-plus me-1"></i> Add
                 </button>
             </div>
