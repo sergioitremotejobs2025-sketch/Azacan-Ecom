@@ -28,7 +28,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'store',
     'cart',
-    # 'payment',
+    'payment',
     'recommendations',
     'rest_framework',
     'graphene_django', 
