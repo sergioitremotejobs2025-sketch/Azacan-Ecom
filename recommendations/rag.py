@@ -106,7 +106,7 @@ def get_recommendations(user_id, top_k=3):
         
         # LLM generation
         try:
-            llm = ChatOllama(model="llama3.1:8b", base_url=os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434'))
+            llm = ChatOllama(model="deepseek-r1:1.5b", base_url=os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434'))
             prompt = ChatPromptTemplate.from_template(
             """You are a helpful book expert.
             
@@ -217,7 +217,7 @@ def get_recommendations_by_book_title(book_title: str, top_k: int = 5) -> str:
 
         # Step 4: Generate recommendations using LLM
         try:
-            llm = ChatOllama(model="llama3.1:8b", temperature=0.7, base_url=os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434'))
+            llm = ChatOllama(model="deepseek-r1:1.5b", temperature=0.7, base_url=os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434'))
             prompt = ChatPromptTemplate.from_template(
                 """You are a knowledgeable bookstore assistant. 
                     A customer enjoyed the book titled "{book_title}".
@@ -258,7 +258,7 @@ def get_recommendations_by_book_title(book_title: str, top_k: int = 5) -> str:
         return "We're having trouble generating recommendations right now. Please try again later or browse our catalog."
 
 
-def get_recommendations_by_query(query: str, top_k: int = 5) -> str:
+def get_recommendations_by_query(query: str, top_k: int = 5):
     """
     Generate book recommendations based on a natural language query using vector similarity (RAG-style).
 
@@ -267,9 +267,9 @@ def get_recommendations_by_query(query: str, top_k: int = 5) -> str:
         top_k (int): Number of similar books to retrieve (default: 5)
 
     Returns:
-        str: LLM-generated recommendations in HTML format or fallback message
+        list: List of dictionaries containing book details and reasons
     """
-    cache_key = f"recommendations_query_{hash(query)}_{top_k}"
+    cache_key = f"recommendations_query_v2_{hash(query)}_{top_k}"
     cached_result = cache.get(cache_key)
     if cached_result:
         logger.info(f"Cache hit for query recommendations: {query[:50]}...")
@@ -288,59 +288,82 @@ def get_recommendations_by_query(query: str, top_k: int = 5) -> str:
         )
 
         if not similar_books:
-            return "No similar books found for your query. Try searching for something else!"
+            return []
 
         # Step 3: Format context for LLM
         context_lines = []
         for b in similar_books:
             author = b.author or "Unknown Author"
             description = b.description or "No description available."
-            context_lines.append(f"Title: {b.title}\nAuthor: {author}\nDescription: {description}\n")
+            context_lines.append(f"Title: {b.title}, Author: {author}, Description: {description}")
 
         context = "\n".join(context_lines)
 
         # Step 4: Generate recommendations using LLM
         try:
-            llm = ChatOllama(model="llama3.1:8b", temperature=0.7, base_url=os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434'))
+            llm = ChatOllama(model="deepseek-r1:1.5b", temperature=0.7, base_url=os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434'))
             prompt = ChatPromptTemplate.from_template(
                 """You are a helpful bookstore assistant. 
-                    A customer is looking for books based on the following request: "{query}".
+                    A customer is looking for books based on: "{query}".
 
-                    Here are some books from our catalog that might match their interests:
-
+                    Here are matching books:
                     {context}
 
-                    Recommend 3-5 books from the list above that best match the customer's request.
-                    For each book, provide a detailed explanation of why it fits the specific query provided.
-
-                    Format your response as an HTML unordered list (<ul><li>...</li></ul>).
-                    Each list item should follow this structure: <li><strong>Title</strong> by Author - Reason for recommendation</li>.
-                    Do not include any text outside the HTML tags."""
+                    For EACH book, provide a brief 1-sentence reason why it matches.
+                    Return ONLY a JSON list of strings.
+                    Example: ["Reason 1", "Reason 2", "Reason 3"]
+                """
             )
 
             chain = prompt | llm | StrOutputParser()
-            recommendation = chain.invoke({
+            response_text = chain.invoke({
                 "query": query,
                 "context": context
             })
 
+            import json
+            try:
+                clean_json = response_text.replace("```json", "").replace("```", "").strip()
+                reasons = json.loads(clean_json)
+            except (json.JSONDecodeError, ValueError):
+                logger.warning(f"Failed to parse LLM JSON: {response_text}")
+                reasons = ["Highly relevant matching based on your query." for _ in similar_books]
+
+            if len(reasons) < len(similar_books):
+                reasons.extend(["A great match for your interests." for _ in range(len(similar_books) - len(reasons))])
+
+            # Construct structured result
+            structured_recommendations = []
+            for i, book in enumerate(similar_books):
+                structured_recommendations.append({
+                    'title': book.title,
+                    'author': book.author,
+                    'description': book.description,
+                    'reference': book.reference,
+                    'reason': reasons[i]
+                })
+
             # Cache successful result for 1 hour
-            cache.set(cache_key, recommendation, timeout=3600)
-            return recommendation
+            cache.set(cache_key, structured_recommendations, timeout=3600)
+            return structured_recommendations
 
         except Exception as llm_error:
             logger.error(f"LLM generation failed for query '{query[:50]}...': {llm_error}")
-            # Fallback: simple formatted list
-            fallback = "<ul>"
+            # Fallback: simple structured list
+            fallback = []
             for b in similar_books:
-                author = b.author or "Unknown Author"
-                fallback += f"<li><strong>{b.title}</strong> by {author}</li>"
-            fallback += "</ul>"
-            return f"<p>Based on your search, you might enjoy:</p>{fallback}"
+                fallback.append({
+                    'title': b.title,
+                    'author': b.author or "Unknown Author",
+                    'description': b.description,
+                    'reference': b.reference,
+                    'reason': "Recommended based on your search query."
+                })
+            return fallback
 
     except Exception as e:
-        logger.error(f"Unexpected error in query recommendations for '{query[:50]}...': {str(e)}")
-        return "We're having trouble generating recommendations for your query right now. Please try again later."
+        logger.error(f"Unexpected error in query recommendations: {str(e)}")
+        return []
         
 def search_books(query: str, top_k: int = 5):
     """
