@@ -106,7 +106,7 @@ def get_recommendations(user_id, top_k=3):
         
         # LLM generation
         try:
-            llm = ChatOllama(model="deepseek-r1:1.5b", base_url=os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434'))
+            llm = ChatOllama(model="DeepSeek-Coder:latest", temperature=0.7, base_url=os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434'))
             prompt = ChatPromptTemplate.from_template(
             """You are a helpful book expert.
             
@@ -217,7 +217,7 @@ def get_recommendations_by_book_title(book_title: str, top_k: int = 5) -> str:
 
         # Step 4: Generate recommendations using LLM
         try:
-            llm = ChatOllama(model="deepseek-r1:1.5b", temperature=0.7, base_url=os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434'))
+            llm = ChatOllama(model="DeepSeek-Coder:latest", temperature=0.7, base_url=os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434'))
             prompt = ChatPromptTemplate.from_template(
                 """You are a knowledgeable bookstore assistant. 
                     A customer enjoyed the book titled "{book_title}".
