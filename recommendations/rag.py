@@ -1,4 +1,5 @@
 import os
+import re
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_ollama import ChatOllama
 from langchain_core.output_parsers import StrOutputParser
@@ -126,7 +127,9 @@ def get_recommendations(user_id, top_k=3):
             
             import json
             try:
-                clean_json = response_text.replace("```json", "").replace("```", "").strip()
+                # Strip think blocks and markdown code tags
+                clean_json = re.sub(r'<think>.*?</think>', '', response_text, flags=re.DOTALL)
+                clean_json = clean_json.replace("```json", "").replace("```", "").strip()
                 reasons = json.loads(clean_json)
             except json.JSONDecodeError:
                 logger.warning(f"Failed to parse LLM JSON response: {response_text}")
@@ -336,7 +339,9 @@ def get_recommendations_by_query(query: str, top_k: int = 5):
 
         import json
         try:
-            clean_json = response_text.replace("```json", "").replace("```", "").strip()
+            # Strip think blocks and markdown code tags
+            clean_json = re.sub(r'<think>.*?</think>', '', response_text, flags=re.DOTALL)
+            clean_json = clean_json.replace("```json", "").replace("```", "").strip()
             reasons = json.loads(clean_json)
         except (json.JSONDecodeError, ValueError):
             logger.warning(f"Failed to parse LLM JSON: {response_text}")
