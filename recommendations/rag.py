@@ -307,8 +307,36 @@ def get_recommendations_by_query_stream(query: str, top_k: int = 5):
         prompt = get_recommendation_prompt()
         chain = prompt | llm | StrOutputParser()
         
+        in_think = False
+        buffer = ""
+        
         for chunk in chain.stream({"query": query, "context": context}):
-            yield chunk
+            buffer += chunk
+            
+            # Simple state machine to skip <think> blocks
+            if not in_think:
+                if "<think>" in buffer:
+                    # Found start of think block
+                    parts = buffer.split("<think>", 1)
+                    if parts[0]:
+                        yield parts[0]
+                    buffer = "" # Rest will be handled after </think>
+                    in_think = True
+                else:
+                    # No think block yet, stream what we have
+                    yield buffer
+                    buffer = ""
+            
+            if in_think:
+                if "</think>" in buffer:
+                    # Found end of think block
+                    parts = buffer.split("</think>", 1)
+                    buffer = parts[1] # Keep what's after </think>
+                    in_think = False
+                    # Don't yield yet, let the next iteration handle it (or yield if it's the end)
+        
+        if buffer and not in_think:
+             yield buffer
 
     except Exception as e:
         logger.error(f"Streaming failed: {e}")
