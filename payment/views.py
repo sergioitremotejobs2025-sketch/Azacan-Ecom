@@ -6,7 +6,7 @@ from payment.forms import ShippingForm
 from payment.models import ShippingAddress, Order, OrderItem
 # Added Order, OrderItem imports
 
-from recommendations.rag import get_recommendations_by_book_title, get_recommendations
+
 
 def checkout(request):
     cart = Cart(request)
@@ -15,10 +15,9 @@ def checkout(request):
     totals = cart.car_total()
     
     recommendations = []
-    # Recommendations now loaded asynchronously via HTMX/AJAX
-    # try:
-    #     if request.user.is_authenticated:
-    #         recommendations = get_recommendations(request.user.id)
+    if request.user.is_authenticated:
+        from recommendations.rag import get_recommendations
+        recommendations = get_recommendations(request.user.id)
     # except Exception as e:
     #     print(f"Error getting recommendations: {e}")
 
