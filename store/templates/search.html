@@ -2,6 +2,74 @@
 {% load static %}
 
 {% block content %}
+<style>
+    #search-loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(5px);
+        z-index: 10000;
+        display: none;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        transition: opacity 0.3s ease-in-out;
+    }
+
+    .spinner-ripple {
+        width: 80px;
+        height: 80px;
+        border: 4px solid #0d6efd;
+        border-radius: 50%;
+        animation: ripple 1.2s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+        opacity: 0;
+        position: relative;
+    }
+
+    @keyframes ripple {
+        0% {
+            transform: scale(0);
+            opacity: 1;
+        }
+
+        100% {
+            transform: scale(1);
+            opacity: 0;
+        }
+    }
+</style>
+
+<div id="search-loading-overlay">
+    <div class="spinner-ripple"></div>
+    <h3 class="mt-4 text-dark fw-bold">Searching books...</h3>
+    <p class="text-muted">Our AI is analyzing your query to find the best matches.</p>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const searchForm = document.querySelector('form[action*="search"]');
+        const overlay = document.getElementById('search-loading-overlay');
+
+        if (searchForm) {
+            searchForm.addEventListener('submit', function (e) {
+                // Only show if the search input is not empty
+                const searchInput = searchForm.querySelector('input[name="search"]');
+                if (searchInput && searchInput.value.trim() !== "") {
+                    overlay.style.display = 'flex';
+                    // Disable the button to prevent multiple submissions
+                    const submitBtn = searchForm.querySelector('button[type="submit"]');
+                    if (submitBtn) {
+                        submitBtn.classList.add('disabled');
+                        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Searching';
+                    }
+                }
+            });
+        }
+    });
+</script>
 <!-- Header-->
 <header class="bg-dark py-5">
     <div class="container px-4 px-lg-5 my-5">
