@@ -29,7 +29,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('store.urls')),
     path('cart/', include('cart.urls')), 
-    path('payment/', include('payment.urls')),
+    # path('payment/', include('payment.urls')),
     path('recommendations/', include('recommendations.urls')),
     path('api/', include('recommendations.api.urls')),
     path('graphql/', GraphQLView.as_view(graphiql=True)),
