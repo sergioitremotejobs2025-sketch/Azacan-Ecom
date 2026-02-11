@@ -35,16 +35,13 @@ def get_recommendations(user_id, top_k=3):
     
     Args:
         user_id (int): The ID of the user to generate recommendations for
-        top_k (int): Number of similar books to retrieve (default: 5)
+        top_k (int): Number of similar books to retrieve (default: 3)
     
     Returns:
-        str: LLM-generated recommendations or error message
-    
-    Raises:
-        None: All exceptions are caught and returned as user-friendly messages
+        list: List of dictionaries containing recommendation details
     """
     # Check cache first
-    cache_key = f"recommendations_v5_{user_id}_{top_k}"
+    cache_key = f"recommendations_v6_{user_id}_{top_k}"
     cached_result = cache.get(cache_key)
     if cached_result:
         logger.info(f"Returning cached recommendations for user {user_id}")
@@ -56,13 +53,13 @@ def get_recommendations(user_id, top_k=3):
         
         # Validate user exists
         if not User.objects.filter(id=user_id).exists():
-            return "Invalid user ID."
+            return []
         
         # Get past purchases
         past_books = Purchase.objects.filter(user_id=user_id).values_list('book_id', flat=True)
         
         if not past_books:
-            return "No purchases yet. Browse our catalog!"
+            return []
         
         # Get embeddings for past purchases
         past_embeddings = Book.objects.filter(id__in=past_books).values_list('embedding', flat=True)
@@ -71,7 +68,7 @@ def get_recommendations(user_id, top_k=3):
         valid_embeddings = [emb for emb in past_embeddings if emb is not None]
         
         if not valid_embeddings:
-            return "No embeddings available for your past purchases. Please check back later as we process your books."
+            return []
         
         # Calculate average embedding
         average_embedding = np.mean(valid_embeddings, axis=0)
@@ -82,7 +79,7 @@ def get_recommendations(user_id, top_k=3):
         ).order_by('distance')[:20])
         
         if not candidate_books:
-            return "No similar books found. Try browsing our catalog for new discoveries!"
+            return []
             
         import random
         # Randomly sample top_k from the candidates to provide variety
@@ -131,11 +128,13 @@ def get_recommendations(user_id, top_k=3):
                 clean_json = re.sub(r'<think>.*?</think>', '', response_text, flags=re.DOTALL)
                 clean_json = clean_json.replace("```json", "").replace("```", "").strip()
                 reasons = json.loads(clean_json)
-            except json.JSONDecodeError:
+            except (json.JSONDecodeError, ValueError):
                 logger.warning(f"Failed to parse LLM JSON response: {response_text}")
                 reasons = [f"Recommended because it's similar to your taste." for _ in similar_books]
 
-            if len(reasons) < len(similar_books):
+            if not isinstance(reasons, list) or len(reasons) < len(similar_books):
+                 if not isinstance(reasons, list):
+                     reasons = []
                  reasons.extend([f"A great choice based on your history." for _ in range(len(similar_books) - len(reasons))])
             
             # Construct structured result with Product ID for cart integration

@@ -1,6 +1,7 @@
 from django.test import TestCase
 from django.contrib.auth.models import User
 from recommendations.models import Book, Purchase
+from store.models import Product, Category
 from recommendations.rag import get_recommendations, get_sentence_transformer_model
 from unittest.mock import patch, MagicMock
 import numpy as np
@@ -112,115 +113,83 @@ class RAGRecommendationTestCase(TestCase):
             password='testpass'
         )
         
-        # Create books with embeddings
+        # Create category
+        self.category = Category.objects.create(name='Test Category', description='Test')
+        
+        # Create books with embeddings and matching products
         self.book1 = Book.objects.create(
             title='Science Fiction Book',
             author='Sci-Fi Author',
             description='A great science fiction novel',
             subjects='Science Fiction',
+            reference='REF1',
             embedding=np.random.rand(384).tolist()
         )
+        Product.objects.create(name=self.book1.title, reference='REF1', category=self.category, price=10.0)
+        
         self.book2 = Book.objects.create(
             title='Fantasy Book',
             author='Fantasy Author',
             description='An epic fantasy adventure',
             subjects='Fantasy',
+            reference='REF2',
             embedding=np.random.rand(384).tolist()
         )
+        Product.objects.create(name=self.book2.title, reference='REF2', category=self.category, price=12.0)
+        
         self.book3 = Book.objects.create(
             title='Mystery Book',
             author='Mystery Author',
             description='A thrilling mystery',
             subjects='Mystery',
+            reference='REF3',
             embedding=np.random.rand(384).tolist()
         )
+        Product.objects.create(name=self.book3.title, reference='REF3', category=self.category, price=15.0)
     
     def test_no_purchases(self):
         """Test recommendations for user with no purchases"""
         result = get_recommendations(self.user.id, top_k=3)
         
-        self.assertIsInstance(result, str)
-        self.assertIn('No purchases yet', result)
+        self.assertIsInstance(result, list)
+        self.assertEqual(len(result), 0)
     
     def test_invalid_user(self):
         """Test recommendations for invalid user ID"""
         result = get_recommendations(99999, top_k=3)
         
-        self.assertIsInstance(result, str)
-        self.assertIn('Invalid user', result)
+        self.assertIsInstance(result, list)
+        self.assertEqual(len(result), 0)
     
     def test_recommendations_with_purchases(self):
         """Test recommendations for user with purchase history"""
         # Create purchase
         Purchase.objects.create(user=self.user, book=self.book1)
         
-        # Mock both ChatOllama and the chain construction
-        with patch('recommendations.rag.ChatOllama') as mock_llm_cls:
-            # Create a mock chain
-            mock_chain = MagicMock()
-            mock_chain.invoke.return_value = "Recommended books: Fantasy Book, Mystery Book"
-            
-            # Configure the mock LLM to be usable in the pipe | operator
-            mock_llm_instance = MagicMock()
-            mock_llm_cls.return_value = mock_llm_instance
-            
-            # When (prompt | llm | parser) happens, we want to control the result
-            # The chain is constructed as: prompt | llm | StrOutputParser()
-            # We can mock the result of the composition
-            
-            # Easier approach: Mock the entire chain pipeline in the function
-            # But since we can't easily do that without refactoring the function, 
-            # let's try to verify if we can just mock invoke on what's returned.
-            
-            # Actually, the error "Input should be a valid string" comes from ChatOllama pydantic validation.
-            # We need to make sure ChatOllama(...) returns something that passes validation 
-            # OR we mock the class in a way that it doesn't trigger validation?
-            # No, ChatOllama is instantiated in the function.
-            
-            # The fix is to ensure the mock object bypasses Pydantic validation or we mock where it's used.
-            # Since we can't easily change the production code to accept mocks, 
-            # we should mock the behavior of current 'chain' variable construction.
-            pass
-
-        # Better approach: Mock the invoke method of the chain. 
-        # Since chain = prompt | llm | StrOutputParser(), 'chain' is a RunnableSequence.
-        # We can patch 'recommendations.rag.ChatPromptTemplate' and others, 
-        # or we can patch the `invoke` method if we can access the chain.
-         
-        # Let's try patching ChatOllama to return a mock that is compliant or matches expectations.
-        # The issue is likely that ChatPromptTemplate.from_template(...) | mock_llm 
-        # tries to validate mock_llm.
-        
-        # Let's use the `MockableMagicMock` we defined above for the return value of ChatOllama()
         with patch('recommendations.rag.ChatOllama') as mock_llm_cls:
             mock_llm_instance = MockableMagicMock()
             mock_llm_cls.return_value = mock_llm_instance
             
-            # Use side_effect to return our mock chain result when the chain is invoked
-            # The chain is formed by pipes. The result of the pipe is what .invoke() is called on.
-            # mocking the pipe operator is hard.
-            
-            # Alternative: Mock `recommendations.rag.ChatPromptTemplate` so that `prompt | ...` returns a mock
             with patch('recommendations.rag.ChatPromptTemplate') as mock_prompt_cls:
                 mock_prompt = MagicMock()
                 mock_prompt_cls.from_template.return_value = mock_prompt
                 
-                # Setup the chain of calls: prompt | llm | parser
-                # prompt | llm -> intermediate
-                # intermediate | parser -> chain
                 mock_intermediate = MagicMock()
                 mock_prompt.__or__.return_value = mock_intermediate
                 
                 mock_chain = MagicMock()
                 mock_intermediate.__or__.return_value = mock_chain
                 
-                mock_chain.invoke.return_value = "Recommended books: Fantasy Book, Mystery Book"
+                # DeepSeek-style response with think block and JSON list
+                mock_chain.invoke.return_value = '<think>Parsing...</think>["Reason 1", "Reason 2"]'
                 
                 result = get_recommendations(self.user.id, top_k=2)
                 
-                self.assertIsInstance(result, str)
-                self.assertNotIn('No purchases', result)
-                self.assertNotIn('Invalid user', result)
+                self.assertIsInstance(result, list)
+                self.assertTrue(len(result) > 0)
+                self.assertIn('book', result[0])
+                self.assertIn('product_id', result[0])
+                self.assertIn('reason', result[0])
     
     def test_recommendations_caching(self):
         """Test that recommendations are cached"""
@@ -239,7 +208,7 @@ class RAGRecommendationTestCase(TestCase):
             mock_chain = MagicMock()
             mock_intermediate.__or__.return_value = mock_chain
             
-            mock_chain.invoke.return_value = "Cached recommendations"
+            mock_chain.invoke.return_value = '["Reason A", "Reason B"]'
             
             # First call - should hit LLM (which is our mock chain)
             result1 = get_recommendations(self.user.id, top_k=2)
@@ -250,7 +219,7 @@ class RAGRecommendationTestCase(TestCase):
             call_count_2 = mock_chain.invoke.call_count
             
             # Results should be the same
-            self.assertEqual(result1, result2)
+            self.assertEqual(len(result1), len(result2))
             # Second call should not invoke LLM again
             self.assertEqual(call_count_1, call_count_2)
     
@@ -261,14 +230,15 @@ class RAGRecommendationTestCase(TestCase):
             title='No Embedding Book',
             author='Author',
             description='Description',
+            reference='REF_NONE',
             embedding=None
         )
         Purchase.objects.create(user=self.user, book=book_no_embedding)
         
         result = get_recommendations(self.user.id, top_k=3)
         
-        self.assertIsInstance(result, str)
-        self.assertIn('No embeddings available', result)
+        self.assertIsInstance(result, list)
+        self.assertEqual(len(result), 0)
     
     def test_llm_failure_fallback(self):
         """Test fallback when LLM fails"""
@@ -280,9 +250,10 @@ class RAGRecommendationTestCase(TestCase):
             
             result = get_recommendations(self.user.id, top_k=2)
             
-            # Should return fallback message with book list
-            self.assertIsInstance(result, str)
-            self.assertIn('Based on your reading history', result)
+            # Should return fallback as a list
+            self.assertIsInstance(result, list)
+            self.assertTrue(len(result) > 0)
+            self.assertEqual(result[0]['reason'], "Recommended based on your history.")
     
     def test_model_caching(self):
         """Test that SentenceTransformer model is cached"""
@@ -304,6 +275,7 @@ class RAGEdgeCasesTestCase(TestCase):
             email='edge@example.com',
             password='testpass'
         )
+        self.category = Category.objects.create(name='Edge Category', description='Test')
     
     def test_empty_top_k(self):
         """Test with top_k=0"""
@@ -311,13 +283,15 @@ class RAGEdgeCasesTestCase(TestCase):
             title='Test',
             author='Author',
             description='Desc',
+            reference='REF_EMPTY',
             embedding=np.random.rand(384).tolist()
         )
+        Product.objects.create(name=book.title, reference=book.reference, category=self.category, price=10.0)
         Purchase.objects.create(user=self.user, book=book)
         
         # Should handle gracefully
         result = get_recommendations(self.user.id, top_k=0)
-        self.assertIsInstance(result, str)
+        self.assertIsInstance(result, list)
     
     def test_large_top_k(self):
         """Test with very large top_k"""
@@ -325,13 +299,15 @@ class RAGEdgeCasesTestCase(TestCase):
             title='Test',
             author='Author',
             description='Desc',
+            reference='REF_LARGE',
             embedding=np.random.rand(384).tolist()
         )
+        Product.objects.create(name=book.title, reference=book.reference, category=self.category, price=10.0)
         Purchase.objects.create(user=self.user, book=book)
         
         # Should handle gracefully even if top_k > available books
         result = get_recommendations(self.user.id, top_k=1000)
-        self.assertIsInstance(result, str)
+        self.assertIsInstance(result, list)
     
     def test_multiple_purchases_same_book(self):
         """Test user purchasing same book multiple times"""
@@ -359,9 +335,9 @@ class RAGEdgeCasesTestCase(TestCase):
             mock_chain = MagicMock()
             mock_intermediate.__or__.return_value = mock_chain
             
-            mock_chain.invoke.return_value = "Recommendations"
+            mock_chain.invoke.return_value = '["Reason ABC"]'
             
             result = get_recommendations(self.user.id, top_k=3)
             
             # Should handle duplicate purchases
-            self.assertIsInstance(result, str)
+            self.assertIsInstance(result, list)
