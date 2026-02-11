@@ -258,6 +258,67 @@ def get_recommendations_by_book_title(book_title: str, top_k: int = 5) -> str:
         return "We're having trouble generating recommendations right now. Please try again later or browse our catalog."
 
 
+def get_similar_books(query: str, top_k: int = 5):
+    """
+    Retrieve top_k similar books from the database using vector similarity.
+    """
+    model = get_sentence_transformer_model()
+    query_embedding = model.encode(query).tolist()
+
+    return (
+        Book.objects.annotate(distance=CosineDistance('embedding', query_embedding))
+        .filter(embedding__isnull=False)
+        .order_by('distance')[:top_k]
+    )
+
+def get_recommendations_by_query_stream(query: str, top_k: int = 5):
+    """
+    Generate book recommendations based on a natural language query using vector similarity (RAG-style).
+    Yields chunks of the LLM response for streaming.
+    """
+    try:
+        # Step 1 & 2: Retrieve similar books
+        similar_books = get_similar_books(query, top_k)
+
+        if not similar_books:
+            yield "No similar books found."
+            return
+
+        # Step 3: Format context
+        context_lines = []
+        for b in similar_books:
+            author = b.author or "Unknown Author"
+            context_lines.append(f"Title: {b.title}, Author: {author}, Description: {b.description}")
+        context = "\n".join(context_lines)
+
+        # Step 4: Stream from LLM
+        llm = ChatOllama(model="DeepSeek-Coder:latest", temperature=0.7, base_url=os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434'))
+        prompt = ChatPromptTemplate.from_template(
+            """TASK: Act as a bookstore AI. Provide a JSON list of matching reasons for the books below.
+                QUERY: "{query}"
+
+                BOOKS:
+                {context}
+
+                OUTPUT FORMAT: ["Reason for book 1", "Reason for book 2", ...]
+                RULES: 
+                - Return ONLY the JSON list.
+                - Each reason must be exactly 1 sentence.
+                - Ensure the order matches the BOOKS list.
+            """
+        )
+        
+        # We wrap in a simple parser to just get the string
+        chain = prompt | llm | StrOutputParser()
+        
+        # Stream the response
+        for chunk in chain.stream({"query": query, "context": context}):
+            yield chunk
+
+    except Exception as e:
+        logger.error(f"Streaming failed: {e}")
+        yield f"Error: {str(e)}"
+
 def get_recommendations_by_query(query: str, top_k: int = 5):
     """
     Generate book recommendations based on a natural language query using vector similarity (RAG-style).
@@ -301,7 +362,7 @@ def get_recommendations_by_query(query: str, top_k: int = 5):
 
         # Step 4: Generate recommendations using LLM
         try:
-            llm = ChatOllama(model="deepseek-r1:1.5b", temperature=0.7, base_url=os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434'))
+            llm = ChatOllama(model="DeepSeek-Coder:latest", temperature=0.7, base_url=os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434'))
             prompt = ChatPromptTemplate.from_template(
                 """You are a helpful bookstore assistant. 
                     A customer is looking for books based on: "{query}".

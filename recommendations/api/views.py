@@ -4,7 +4,8 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from ..models import Book
 from .serializers import BookSerializer
-from ..rag import get_recommendations, get_recommendations_by_book_title, get_recommendations_by_query
+from ..rag import get_recommendations, get_recommendations_by_book_title, get_recommendations_by_query, get_recommendations_by_query_stream
+from django.http import StreamingHttpResponse
 
 class BookViewSet(viewsets.ModelViewSet):
     """
@@ -59,3 +60,20 @@ def recommend_by_query(request):
     top_k = int(request.data.get('top_k', 5))
     recommendations = get_recommendations_by_query(query, top_k=top_k)
     return Response({"recommendations": recommendations})
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def recommend_by_query_stream(request):
+    """
+    Get recommendations based on a natural language query with streaming results.
+    """
+    query = request.data.get('query')
+    if not query:
+        return Response({"error": "query is required"}, status=status.HTTP_400_BAD_REQUEST)
+    
+    top_k = int(request.data.get('top_k', 5))
+    
+    return StreamingHttpResponse(
+        get_recommendations_by_query_stream(query, top_k=top_k),
+        content_type='text/plain'
+    )
