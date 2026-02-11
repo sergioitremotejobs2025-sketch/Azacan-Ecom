@@ -1,14 +1,19 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from cart.cart import Cart
 
-from payment.forms import ShippingForm
-from payment.models import ShippingAddress, Order, OrderItem
+# Imports moved inside functions to avoid circular imports
+# from cart.cart import Cart
+# from payment.forms import ShippingForm
+# from payment.models import ShippingAddress, Order, OrderItem
+
 # Added Order, OrderItem imports
 
 
 
 def checkout(request):
+    from cart.cart import Cart
+    from payment.forms import ShippingForm
+    from payment.models import ShippingAddress
     cart = Cart(request)
     cart_products = cart.get_prods()
     quantities = cart.get_quants()
@@ -49,6 +54,7 @@ def checkout(request):
 
 def billing_info(request):
     if request.POST:
+        from cart.cart import Cart
         cart = Cart(request)
         cart_products = cart.get_prods()
         quantities = cart.get_quants()
@@ -81,6 +87,8 @@ def billing_info(request):
 def process_order(request):
     if request.POST:
         # Get the cart
+        from cart.cart import Cart
+        from payment.models import Order, OrderItem
         cart = Cart(request)
         cart_products = cart.get_prods()
         quantities = cart.get_quants()
